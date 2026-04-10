@@ -17,7 +17,7 @@ import {
     Lock,
     AlertTriangle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useApiConfig } from '@/hooks/useApiConfig';
 import StatusIndicator from '@/components/ui/StatusIndicator';
@@ -72,13 +72,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
     }, [authLoading, user, router]);
 
+    const hasShownConfigToast = useRef(false);
+
     // Verificar configuração 
     useEffect(() => {
-        if (!configLoading && !isConfigured && pathname !== '/settings') {
-            // Apenas avisamos uma vez no toast, mas não redirecionamos mais
+        if (!configLoading && !isConfigured && pathname !== '/settings' && !hasShownConfigToast.current) {
             toast.warning('Configure a API para liberar todas as funcionalidades');
+            hasShownConfigToast.current = true;
         }
     }, [configLoading, isConfigured, pathname, toast]);
+
+    // Resetar o aviso quando for para a página de settings ou quando configurar
+    useEffect(() => {
+        if (pathname === '/settings' || isConfigured) {
+            hasShownConfigToast.current = false;
+        }
+    }, [pathname, isConfigured]);
 
     // Buscar status da API e worker
     useEffect(() => {
