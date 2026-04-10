@@ -101,18 +101,103 @@ export default function MasterSettingsPage() {
                     </div>
 
                     <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-colors ${config.enableAI ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
-                            ✨
+                </div>
+
+                {/* WHATSAPP INFRASTRUCTURE BOX */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center text-xl">
+                            🌐
                         </div>
-                        <div className="pr-16">
-                            <h2 className="text-lg font-semibold text-slate-800">Motor de Inteligência Artificial</h2>
-                            <p className="text-sm text-slate-500">
-                                {config.enableAI 
-                                    ? 'A IA está ATIVA. Clientes podem usar créditos para gerar conteúdos automaticamente.' 
-                                    : 'A IA está DESATIVADA. Todas as funcionalidades e botões "Gerar com IA" estão ocultos.'}
-                            </p>
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-800">Infraestrutura WhatsApp (Padrão Global)</h2>
+                            <p className="text-sm text-slate-500">Configuração herdada automaticamente por novas conexões de clientes.</p>
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">URL da API Evolution</label>
+                            <Input 
+                                placeholder="https://api.seuservidor.com" 
+                                value={config.evolutionUrl}
+                                onChange={(e) => setConfig({...config, evolutionUrl: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">API Key Global</label>
+                            <Input 
+                                type="password"
+                                placeholder={config.evolutionKey ? '******** (Salva)' : 'Chave da API...'}
+                                value={config.evolutionKey === '********' ? '' : config.evolutionKey}
+                                onChange={(e) => setConfig({...config, evolutionKey: e.target.value})}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Instância de Teste</label>
+                            <Input 
+                                placeholder="ex: main" 
+                                value={config.instanceName}
+                                onChange={(e) => setConfig({...config, instanceName: e.target.value})}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* AI ADVANCED BOX */}
+                {config.enableAI && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                                🤖
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-800">Configurações de IA Avançadas</h2>
+                                <p className="text-sm text-slate-500">Defina o provedor e as credenciais globais para a plataforma.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Provedor</label>
+                                <select 
+                                    className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"
+                                    value={config.aiProvider}
+                                    onChange={(e) => setConfig({...config, aiProvider: e.target.value})}
+                                >
+                                    <option value="OPENAI">OpenAI</option>
+                                    <option value="GEMINI">Google Gemini</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Modelo</label>
+                                <Input 
+                                    placeholder="ex: gpt-4o-mini" 
+                                    value={config.aiModel}
+                                    onChange={(e) => setConfig({...config, aiModel: e.target.value})}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">API Key de IA</label>
+                                <Input 
+                                    type="password"
+                                    placeholder={config.aiApiKey ? '******** (Salva)' : 'Sua chave de API...'}
+                                    value={config.aiApiKey === '********' ? '' : config.aiApiKey}
+                                    onChange={(e) => setConfig({...config, aiApiKey: e.target.value})}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">System Prompt Global</label>
+                                <textarea 
+                                    className="w-full rounded-lg border border-slate-300 p-2.5 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[100px] text-sm"
+                                    placeholder="Instruções para o comportamento da IA..."
+                                    value={config.aiSystemPrompt}
+                                    onChange={(e) => setConfig({...config, aiSystemPrompt: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
                 </div>
 
                 {/* SMTP BOX */}

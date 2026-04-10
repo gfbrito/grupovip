@@ -35,10 +35,16 @@ export async function listServers(req: AuthenticatedRequest, res: Response): Pro
             orderBy: { priority: 'asc' },
         });
 
-        const maskedServers = servers.map(s => ({
-            ...s,
-            apiKey: maskApiKey(s.apiKey),
-        }));
+        const maskedServers = servers.map(s => {
+            if (!isMaster) {
+                const { url, apiKey, ...rest } = s as any;
+                return rest;
+            }
+            return {
+                ...s,
+                apiKey: maskApiKey(s.apiKey),
+            };
+        });
 
         // Buscar estatísticas
         const activeCount = servers.filter(s => s.isActive).length;
@@ -87,6 +93,12 @@ export async function getServer(req: AuthenticatedRequest, res: Response): Promi
 
         if (!isMaster && !isAdmin && server.userId !== userId) {
             res.status(403).json({ error: 'Acesso negado' });
+            return;
+        }
+
+        if (!isMaster) {
+            const { url, apiKey, ...rest } = server as any;
+            res.json(rest);
             return;
         }
 

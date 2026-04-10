@@ -1,3 +1,7 @@
+[ignoring loop detection]
+/**
+ * Master configuration controller - v2.1
+ */
 import { Response } from 'express';
 import { prisma } from '../config/database';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
@@ -246,26 +250,32 @@ export async function getSystemStats(req: AuthenticatedRequest, res: Response): 
  */
 export async function getMasterConfig(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-        const config = await prisma.appConfig.findUnique({
-            where: { id: 1 }
-        });
+        const [appConfig, aiConfig] = await Promise.all([
+            prisma.appConfig.findUnique({ where: { id: 1 } }),
+            prisma.aIConfig.findUnique({ where: { id: 1 } })
+        ]);
 
-        if (!config) {
-            res.json({});
-            return;
-        }
-
-        // Não retorna senhas reais por segurança se quiser mascarar, 
-        // mas sendo Master panel é comum retornar. Para maior segurança, retorne mask.
         res.json({
-            paypalClientId: config.paypalClientId || '',
-            paypalSecret: config.paypalSecret ? '********' : '',
-            paypalWebhookId: config.paypalWebhookId || '',
-            smtpHost: config.smtpHost || '',
-            smtpPort: config.smtpPort || '',
-            smtpUser: config.smtpUser || '',
-            smtpPass: config.smtpPass ? '********' : '',
-            enableAI: config.enableAI ?? true,
+            // Pagamentos e SMTP (AppConfig)
+            paypalClientId: appConfig?.paypalClientId || '',
+            paypalSecret: appConfig?.paypalSecret ? '********' : '',
+            paypalWebhookId: appConfig?.paypalWebhookId || '',
+            smtpHost: appConfig?.smtpHost || '',
+            smtpPort: appConfig?.smtpPort || '',
+            smtpUser: appConfig?.smtpUser || '',
+            smtpPass: appConfig?.smtpPass ? '********' : '',
+            
+            // Infraestrutura WhatsApp (AppConfig)
+            evolutionUrl: appConfig?.evolutionUrl || '',
+            evolutionKey: appConfig?.evolutionKey ? '********' : '',
+            instanceName: appConfig?.instanceName || '',
+            
+            // Configurações de IA (AIConfig)
+            enableAI: appConfig?.enableAI ?? true,
+            aiProvider: aiConfig?.provider || 'OPENAI',
+            aiApiKey: aiConfig?.apiKey ? '********' : '',
+            aiModel: aiConfig?.model || 'gpt-4o-mini',
+            aiSystemPrompt: aiConfig?.systemPrompt || '',
         });
     } catch (error) {
         console.error('Erro ao buscar master config:', error);
@@ -280,36 +290,53 @@ export async function getMasterConfig(req: AuthenticatedRequest, res: Response):
 export async function updateMasterConfig(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
         const data = req.body;
-        const currentConfig = await prisma.appConfig.findUnique({ where: { id: 1 } });
         
-        // Mantém senha antiga se recebeu '********' ou vazio que represente não mudar
-        const updateData: any = {
+        // 1. Atualizar AppConfig (Pagamentos, SMTP, Infra e Toggle IA)
+        const appUpdateData: any = {
             paypalClientId: data.paypalClientId,
             paypalWebhookId: data.paypalWebhookId,
             smtpHost: data.smtpHost,
             smtpPort: data.smtpPort,
             smtpUser: data.smtpUser,
+            evolutionUrl: data.evolutionUrl,
+            instanceName: data.instanceName,
             enableAI: data.enableAI !== undefined ? data.enableAI : true,
         };
 
         if (data.paypalSecret && data.paypalSecret !== '********') {
-            updateData.paypalSecret = data.paypalSecret;
+            appUpdateData.paypalSecret = data.paypalSecret;
         }
-
         if (data.smtpPass && data.smtpPass !== '********') {
-            updateData.smtpPass = data.smtpPass;
+            appUpdateData.smtpPass = data.smtpPass;
+        }
+        if (data.evolutionKey && data.evolutionKey !== '********') {
+            appUpdateData.evolutionKey = data.evolutionKey;
         }
 
-        const updated = await prisma.appConfig.upsert({
+        await prisma.appConfig.upsert({
             where: { id: 1 },
-            update: updateData,
-            create: {
-                id: 1,
-                ...updateData
-            }
+            update: appUpdateData,
+            create: { id: 1, ...appUpdateData }
         });
 
-        res.json({ message: 'Configurações atualizadas com sucesso!' });
+        // 2. Atualizar AIConfig (Detalhes do Provedor)
+        const aiUpdateData: any = {
+            provider: data.aiProvider || 'OPENAI',
+            model: data.aiModel || 'gpt-4o-mini',
+            systemPrompt: data.aiSystemPrompt,
+        };
+
+        if (data.aiApiKey && data.aiApiKey !== '********') {
+            aiUpdateData.apiKey = data.aiApiKey;
+        }
+
+        await prisma.aIConfig.upsert({
+            where: { id: 1 },
+            update: aiUpdateData,
+            create: { id: 1, ...aiUpdateData }
+        });
+
+        res.json({ message: 'Configurações do Master atualizadas com sucesso!' });
     } catch (error) {
         console.error('Erro ao atualizar master config:', error);
         res.status(500).json({ error: 'Erro interno ao atualizar configurações' });
