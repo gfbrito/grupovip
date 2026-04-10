@@ -369,7 +369,7 @@ export const generateMagicLaunch = async (req: AuthenticatedRequest, res: Respon
                     launchId: newLaunch.id,
                     isEnabled: true,
                     autoReply: false,
-                    systemPrompt: \`Você é um assistente do lançamento \${magicLaunch.launchName}. Aja de forma persuasiva baseada no produto: \${productInfo}\`
+                    systemPrompt: `Você é um assistente do lançamento ${magicLaunch.launchName}. Aja de forma persuasiva baseada no produto: ${productInfo}`
                 }
             });
 
