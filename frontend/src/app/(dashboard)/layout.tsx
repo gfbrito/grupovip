@@ -40,6 +40,8 @@ const adminNavigation = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+    console.log('🏗️ DashboardLayout renderizando...');
+    const [mounted, setMounted] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [apiStatus, setApiStatus] = useState<'connected' | 'disconnected' | 'loading' | 'not_configured'>('loading');
     const [workerStatus, setWorkerStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading');
@@ -50,10 +52,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
     const toast = useToast();
 
+    // Hydration guard
+    useEffect(() => {
+        console.log('✅ DashboardLayout montado (Client-side)');
+        setMounted(true);
+    }, []);
+
     // Log de navegação para depuração
     useEffect(() => {
-        console.log('📍 Rota atual:', pathname);
-    }, [pathname]);
+        if (mounted) {
+            console.log('📍 Rota detectada pelo React:', pathname);
+        }
+    }, [pathname, mounted]);
 
     // Verificar autenticação
     useEffect(() => {
@@ -93,10 +103,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
     }, [user]);
 
-    if (authLoading || !user) {
+    if (!mounted || authLoading || !user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    <p className="text-sm text-slate-500">Iniciando Dashboard...</p>
+                </div>
             </div>
         );
     }
