@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import { Search, RefreshCw } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
@@ -18,9 +18,9 @@ export default function GroupParticipantsList({ launchId, groupId, lastSyncTime,
 
     useEffect(() => {
         fetchLeads();
-    }, [page, lastSyncTime, expandedTimestamp]);
+    }, [page, lastSyncTime, expandedTimestamp, fetchLeads]);
 
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         try {
             setLoading(true);
             // Fetch leads filtering by this specific group
@@ -32,7 +32,7 @@ export default function GroupParticipantsList({ launchId, groupId, lastSyncTime,
         } finally {
             setLoading(false);
         }
-    };
+    }, [launchId, groupId, page]);
 
     if (loading && leads.length === 0) {
         return <div className="p-4 text-center text-sm text-slate-500">Carregando participantes...</div>;

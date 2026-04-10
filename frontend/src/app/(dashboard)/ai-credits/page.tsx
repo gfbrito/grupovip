@@ -263,7 +263,7 @@ export default function AICreditsPage() {
                                         await handleCapture(data.orderID);
                                     }}
                                     onError={(err) => {
-                                        showToast('error', 'Ocorreu um erro no Widget do PayPal.');
+                                        addToast({ type: 'error', title: 'Erro', message: 'Ocorreu um erro no Widget do PayPal.' });
                                         console.error(err);
                                     }}
                                 />

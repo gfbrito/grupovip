@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Globe, Key, Server, Wifi, WifiOff, CheckCircle,
     Plus, Trash2, GripVertical, AlertTriangle, RefreshCw,
@@ -270,7 +270,7 @@ export default function SettingsPage() {
         fetchQrCode(serverId);
     };
 
-    const fetchQrCode = async (serverId: number) => {
+    const fetchQrCode = useCallback(async (serverId: number) => {
         try {
             const res = await api.get(`/whatsapp-servers/${serverId}/qr`);
             setQrData({
@@ -287,7 +287,7 @@ export default function SettingsPage() {
             console.error(e);
             toast.error('Erro ao buscar QR Code');
         }
-    };
+    }, [fetchServers, toast]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;

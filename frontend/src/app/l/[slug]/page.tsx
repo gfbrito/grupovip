@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2, AlertCircle } from 'lucide-react';
 import api from '@/lib/api';
@@ -36,9 +36,9 @@ export default function LaunchRedirectPage() {
         if (slug) {
             handleRedirect();
         }
-    }, [slug]);
+    }, [slug, handleRedirect]);
 
-    const handleRedirect = async () => {
+    const handleRedirect = useCallback(async () => {
         try {
             // 1. Buscar dados de redirecionamento
             // Usamos fetch direto pois pode ser um endpoint público sem auth, 
@@ -86,7 +86,7 @@ export default function LaunchRedirectPage() {
             setError(err.message || 'Erro ao processar redirecionamento');
             setLoading(false);
         }
-    };
+    }, [slug]);
 
     const triggerTracking = (tracking: any) => {
         if (!tracking) return;
