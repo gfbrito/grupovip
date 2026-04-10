@@ -18,7 +18,9 @@ export function useApiConfig() {
         try {
             const response = await api.get('/settings');
             setConfig(response.data);
-        } catch {
+        } catch (err: any) {
+            // Se for 401, o useAuth já deve tratar, mas evitamos travar o config
+            console.error('Erro ao buscar configuração da API:', err);
             setConfig(null);
         } finally {
             setLoading(false);

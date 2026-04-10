@@ -15,6 +15,7 @@ import {
     Rocket,
     Crown,
     Lock,
+    AlertTriangle,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -56,13 +57,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
     }, [authLoading, user, router]);
 
-    // Verificar configuração e redirecionar se necessário
+    // Verificar configuração 
     useEffect(() => {
         if (!configLoading && !isConfigured && pathname !== '/settings') {
-            toast.warning('Configure a API para continuar');
-            router.push('/settings');
+            // Apenas avisamos uma vez no toast, mas não redirecionamos mais
+            toast.warning('Configure a API para liberar todas as funcionalidades');
         }
-    }, [configLoading, isConfigured, pathname, router, toast]);
+    }, [configLoading, isConfigured, pathname, toast]);
 
     // Buscar status da API e worker
     useEffect(() => {
@@ -230,6 +231,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                     </div>
                 </header>
+
+                {/* API Warning Banner */}
+                {!configLoading && !isConfigured && (
+                    <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+                        <div className="flex items-center gap-3 max-w-7xl mx-auto">
+                            <div className="p-1.5 bg-amber-100 rounded-lg">
+                                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-amber-800">
+                                    API não configurada. Configure a Evolution API para começar a disparar mensagens.
+                                </p>
+                            </div>
+                            <Link
+                                href="/settings"
+                                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition"
+                            >
+                                Configurar Agora
+                            </Link>
+                        </div>
+                    </div>
+                )}
 
                 {/* Page content */}
                 <main className="p-4 lg:p-8">{children}</main>
