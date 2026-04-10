@@ -28,11 +28,20 @@ export async function register(req: AuthenticatedRequest, res: Response): Promis
             return;
         }
 
-        // Determinar role - gfbrito@gmail.com é MASTER
-        const role = email.toLowerCase() === MASTER_EMAIL.toLowerCase() ? 'MASTER' : 'USER';
+        // Determinar role e plano - gfbrito@gmail.com é MASTER/ENTERPRISE
+        const isMaster = email.toLowerCase() === MASTER_EMAIL.toLowerCase();
+        const role = isMaster ? 'MASTER' : 'USER';
+        
+        // Buscar o plano correto pelo nome (mais seguro que ID fixo)
+        const plan = await prisma.plan.findUnique({
+            where: { name: isMaster ? 'ENTERPRISE' : 'FREE' }
+        });
 
-        // Se for MASTER, usa plano ENTERPRISE (id=4), senão FREE (id=1)
-        const planId = role === 'MASTER' ? 4 : 1;
+        if (!plan) {
+            throw new Error(`Plano ${isMaster ? 'ENTERPRISE' : 'FREE'} não encontrado no banco de dados.`);
+        }
+
+        const planId = plan.id;
 
         // Criar usuário
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
