@@ -100,7 +100,20 @@ export default function LaunchInboxPage() {
             setLoading(true);
             const res = await api.get(`/launches/${id}/inbox?status=${filter}`);
             setMessages(res.data.messages);
-            setStats(res.data.stats);
+            
+            // Transform Prisma groupBy array to object if needed
+            if (Array.isArray(res.data.stats)) {
+                const statsObj: any = { PENDING: 0, APPROVED: 0, REJECTED: 0, IGNORED: 0, TOTAL: 0 };
+                res.data.stats.forEach((s: any) => {
+                    if (s.status) {
+                        statsObj[s.status] = s._count;
+                        statsObj.TOTAL += s._count;
+                    }
+                });
+                setStats(statsObj);
+            } else {
+                setStats(res.data.stats);
+            }
         } catch (error) {
             console.error(error);
         } finally {

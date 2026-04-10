@@ -38,17 +38,17 @@ interface Launch {
 
 interface Group {
     id: number;
-    groupId: string;
+    remoteJid: string;
     number: number;
     name: string;
-    nickname: string | null;
-    inviteUrl: string | null;
-    participantsCount: number;
-    maxParticipants: number;
+    memberCount: number;
+    inviteLink: string | null;
+    isReceiving: boolean;
+    activeLeads: number;
+    syncedAt: string | null;
     isActive: boolean;
     isFull: boolean;
     isLocked: boolean;
-    lastSync: string | null;
 }
 
 interface QueueItem {
