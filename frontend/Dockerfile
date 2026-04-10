@@ -8,6 +8,7 @@ RUN npm install
 
 # Copiar código fonte
 COPY . .
+RUN mkdir -p public
 
 # Build
 # Nota: certifique-se de que "output": "standalone" está no next.config.mjs
