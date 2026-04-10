@@ -21,6 +21,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 # Copiar arquivos necessários do build standalone
 RUN mkdir -p ./public
