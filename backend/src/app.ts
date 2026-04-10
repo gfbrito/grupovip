@@ -67,10 +67,13 @@ async function bootstrap() {
         console.log('✓ Scheduler de créditos de IA iniciado (Cron)');
 
         // Iniciar servidor
-        app.listen(Number(PORT), '0.0.0.0', () => {
-            console.log(`\n🚀 Backend rodando em http://localhost:${PORT}`);
-            console.log(`   API: http://localhost:${PORT}/api`);
-            console.log(`   Health: http://localhost:${PORT}/health\n`);
+        const server = app.listen(Number(PORT), '0.0.0.0', () => {
+            console.log(`\n🚀 Backend rodando na porta ${PORT}`);
+            console.log(`   Health: /health\n`);
+        });
+
+        server.on('error', (error) => {
+            console.error('❌ Erro no servidor Express:', error);
         });
     } catch (error) {
         console.error('Erro ao inicializar servidor:', error);
