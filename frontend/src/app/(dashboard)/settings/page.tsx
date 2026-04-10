@@ -372,7 +372,6 @@ export default function SettingsPage() {
                 >
                     Conexões WhatsApp
                 </button>
-                </button>
             </div>
 
             {/* Servers Tab */}
@@ -589,12 +588,10 @@ export default function SettingsPage() {
                         </div>
                     )}
 
-                    {/* Priority Note */}
                     <p className="text-sm text-slate-500">
                         A prioridade de uso é: <strong>Baileys → Evolution → Web.js</strong>.
                         O sistema usa automaticamente o primeiro servidor ativo disponível.
-                              )}        </Card.Footer>
-                    </Card>
+                    </p>
                 </div>
             )}
 
