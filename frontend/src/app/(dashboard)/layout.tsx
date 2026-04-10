@@ -50,6 +50,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname();
     const toast = useToast();
 
+    // Log de navegação para depuração
+    useEffect(() => {
+        console.log('📍 Rota atual:', pathname);
+    }, [pathname]);
+
     // Verificar autenticação
     useEffect(() => {
         if (!authLoading && !user) {
@@ -69,10 +74,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     useEffect(() => {
         const fetchStatus = async () => {
             try {
+                console.log('🔄 Verificando status da API...');
                 const response = await api.get('/status');
+                console.log('✅ Status da API recebido:', response.data);
                 setApiStatus(response.data.api);
                 setWorkerStatus(response.data.worker === 'running' ? 'connected' : 'disconnected');
-            } catch {
+            } catch (error) {
+                console.error('❌ Erro ao buscar status da API:', error);
                 setApiStatus('disconnected');
                 setWorkerStatus('disconnected');
             }
