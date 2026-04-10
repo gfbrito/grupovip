@@ -14,6 +14,9 @@ import { initCreditsScheduler } from './services/credits-scheduler';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy é necessário para cookies secure: true funcionarem atrás do Easypanel/Nginx
+app.set('trust proxy', 1);
+
 // Middlewares globais
 const allowedOrigins = [
     process.env.FRONTEND_URL,
