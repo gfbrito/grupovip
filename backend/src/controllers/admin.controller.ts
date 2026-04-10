@@ -1,4 +1,3 @@
-[ignoring loop detection]
 /**
  * Master configuration controller - v2.1
  */
