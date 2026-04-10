@@ -10,7 +10,7 @@ interface ModalProps {
     children: React.ReactNode;
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     const overlayRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -55,3 +55,5 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         </div>
     );
 }
+
+export default Modal;

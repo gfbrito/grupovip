@@ -53,3 +53,5 @@ export function AICreditsWidget() {
         </Link>
     );
 }
+
+export default AICreditsWidget;

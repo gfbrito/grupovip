@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Plus, Rocket, Trash2 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,8 +11,22 @@ import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import api from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+    createdAt: string;
+    _count: {
+        leads: number;
+        groups: number;
+    };
+}
+
 export default function LaunchesPage() {
-    const [launches, setLaunches] = useState<any[]>([]);
+    const [launches, setLaunches] = useState<Launch[]>([]);
     const [loading, setLoading] = useState(true);
     const { addToast } = useToast();
 
@@ -20,11 +35,7 @@ export default function LaunchesPage() {
     const [launchToDelete, setLaunchToDelete] = useState<{ id: number, name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    useEffect(() => {
-        fetchLaunches();
-    }, []);
-
-    const fetchLaunches = async () => {
+    const fetchLaunches = useCallback(async () => {
         try {
             const response = await api.get('/launches');
             setLaunches(response.data.launches);
@@ -38,7 +49,11 @@ export default function LaunchesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [addToast]);
+
+    useEffect(() => {
+        fetchLaunches();
+    }, [fetchLaunches]);
 
     const confirmDelete = (e: React.MouseEvent, id: number, name: string) => {
         e.preventDefault();
@@ -117,10 +132,11 @@ export default function LaunchesPage() {
                                     <div className="flex-shrink-0">
                                         {launch.logoUrl ? (
                                             <div className="relative w-16 h-16 rounded-full overflow-hidden border border-slate-200">
-                                                <img
+                                                <Image
                                                     src={launch.logoUrl}
                                                     alt={launch.name}
-                                                    className="w-full h-full object-cover"
+                                                    fill
+                                                    className="object-cover"
                                                 />
                                             </div>
                                         ) : (

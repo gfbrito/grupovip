@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
@@ -21,11 +21,7 @@ export default function MasterSettingsPage() {
         enableAI: true,
     });
 
-    useEffect(() => {
-        fetchConfig();
-    }, []);
-
-    const fetchConfig = async () => {
+    const fetchConfig = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await api.get('/admin/config');
@@ -45,7 +41,11 @@ export default function MasterSettingsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [addToast]);
+
+    useEffect(() => {
+        fetchConfig();
+    }, [fetchConfig]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();

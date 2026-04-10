@@ -11,7 +11,7 @@ interface WhatsAppTextProps {
  * Componente que renderiza texto com formatação estilo WhatsApp
  * Suporta: *negrito*, _itálico_, ~tachado~, ```código```
  */
-export default function WhatsAppText({ text, className = '' }: WhatsAppTextProps) {
+export function WhatsAppText({ text, className = '' }: WhatsAppTextProps) {
     const formatText = (input: string): React.ReactNode[] => {
         if (!input) return [];
 
@@ -112,3 +112,5 @@ export default function WhatsAppText({ text, className = '' }: WhatsAppTextProps
         </div>
     );
 }
+
+export default WhatsAppText;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Plus,
@@ -23,6 +23,7 @@ import {
     Check,
     X
 } from 'lucide-react';
+import Image from 'next/image';
 import api from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import LaunchHeader from '@/components/launch/LaunchHeader';
@@ -33,15 +34,44 @@ import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 import WhatsAppText from '@/components/ui/WhatsAppText';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface Message {
+    id: number;
+    title: string;
+    content: string;
+    type: string;
+    mediaUrl: string | null;
+    scheduledAt: string;
+    delayMin: number;
+    delayMax: number;
+    status: string;
+    applyToAll: boolean;
+}
+
+interface Group {
+    id: number;
+    name: string;
+    nickname: string | null;
+    number: number;
+}
+
 export default function LaunchMessagesPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [messages, setMessages] = useState<any[]>([]);
-    const [groups, setGroups] = useState<any[]>([]); // Para selecionar no teste
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [groups, setGroups] = useState<Group[]>([]); // Para selecionar no teste
 
     // Create Form State
     const [showForm, setShowForm] = useState(false);
@@ -95,13 +125,7 @@ export default function LaunchMessagesPage() {
         }
     };
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [id]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [launchRes, msgsRes, groupsRes] = await Promise.all([
@@ -123,7 +147,13 @@ export default function LaunchMessagesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+    }, [id, fetchData]);
 
     const handleCreate = async (e: React.FormEvent, sendNow: boolean = false) => {
         e.preventDefault();
@@ -422,7 +452,7 @@ export default function LaunchMessagesPage() {
                                             {formData.type !== 'TEXT' && formData.mediaUrl && (
                                                 <div className="bg-slate-100 rounded mb-1 h-32 flex items-center justify-center text-slate-400 overflow-hidden">
                                                     {formData.type === 'IMAGE' ? (
-                                                        <img src={formData.mediaUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                                        <Image src={formData.mediaUrl} alt="Preview" fill className="object-cover" />
                                                     ) : (
                                                         <div className="flex flex-col items-center">
                                                             {formData.type === 'VIDEO' && <Video className="w-8 h-8" />}
@@ -467,7 +497,7 @@ export default function LaunchMessagesPage() {
                                         <div className="relative w-full h-24 bg-slate-200 rounded overflow-hidden">
                                             {/* Simplificado apenas mostrando icone se não for imagem */}
                                             {msg.type === 'IMAGE' ? (
-                                                <img src={msg.mediaUrl} className="w-full h-full object-cover" alt="Media" />
+                                                <Image src={msg.mediaUrl} fill className="object-cover" alt="Media" />
                                             ) : (
                                                 <div className="absolute inset-0 flex items-center justify-center text-slate-500">
                                                     {msg.type === 'VIDEO' ? <Video /> : <Mic />}

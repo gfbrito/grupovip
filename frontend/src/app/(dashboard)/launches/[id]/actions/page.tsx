@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Plus,
@@ -23,14 +23,36 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface Action {
+    id: number;
+    type: string;
+    status: string;
+    scheduledAt: string;
+    applyToAll: boolean;
+    config: {
+        name?: string;
+        description?: string;
+        imageUrl?: string;
+    };
+}
+
 export default function LaunchActionsPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [actions, setActions] = useState<any[]>([]);
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [actions, setActions] = useState<Action[]>([]);
 
     // Create Form State
     const [isCreating, setIsCreating] = useState(false);
@@ -46,13 +68,7 @@ export default function LaunchActionsPage() {
         applyToAll: true,
     });
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [id]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [launchRes, actionsRes] = await Promise.all([
@@ -72,7 +88,13 @@ export default function LaunchActionsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+    }, [id, fetchData]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();

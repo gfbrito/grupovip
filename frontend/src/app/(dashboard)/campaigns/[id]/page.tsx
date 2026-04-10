@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Play, Pause, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import Card from '@/components/ui/Card';
@@ -65,13 +65,7 @@ export default function CampaignDetailPage() {
     const toast = useToast();
     const campaignId = params.id as string;
 
-    useEffect(() => {
-        fetchCampaign();
-        const interval = setInterval(fetchCampaign, 5000);
-        return () => clearInterval(interval);
-    }, [campaignId]);
-
-    const fetchCampaign = async () => {
+    const fetchCampaign = useCallback(async () => {
         try {
             const response = await api.get(`/campaigns/${campaignId}`);
             setCampaign(response.data.campaign);
@@ -82,7 +76,13 @@ export default function CampaignDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [campaignId, router, toast]);
+
+    useEffect(() => {
+        fetchCampaign();
+        const interval = setInterval(fetchCampaign, 5000);
+        return () => clearInterval(interval);
+    }, [fetchCampaign]);
 
     const handleStart = async () => {
         try {

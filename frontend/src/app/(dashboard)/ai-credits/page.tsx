@@ -19,7 +19,7 @@ export default function AICreditsPage() {
         fetchPackages,
         purchasePackage 
     } = useAICredits();
-    const { showToast } = useToast();
+    const { addToast } = useToast();
     const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
 
     useEffect(() => {
@@ -31,12 +31,12 @@ export default function AICreditsPage() {
     const handleCapture = async (orderId: string) => {
         try {
             const { data } = await api.post('/ai-credits/capture', { orderId });
-            showToast('success', data.message || 'Pagamento confirmado!');
+            addToast({ type: 'success', title: 'Sucesso', message: data.message || 'Pagamento confirmado!' });
             setSelectedPkg(null);
             fetchBalance();
             fetchHistory();
         } catch (error: any) {
-            showToast('error', error.response?.data?.error || 'Erro ao capturar compra');
+            addToast({ type: 'error', title: 'Erro', message: error.response?.data?.error || 'Erro ao capturar compra' });
         }
     };
 

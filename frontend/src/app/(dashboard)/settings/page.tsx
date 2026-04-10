@@ -13,6 +13,7 @@ import Badge from '@/components/ui/Badge';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
+import Image from 'next/image';
 import Link from 'next/link';
 
 interface Settings {
@@ -101,13 +102,7 @@ export default function SettingsPage() {
     const canAddMore = currentConnections < maxConnections;
     const isAtLimit = currentConnections >= maxConnections;
 
-    useEffect(() => {
-        fetchSettings();
-        fetchServers();
-        fetchAIConfig();
-    }, []);
-
-    const fetchAIConfig = async () => {
+    const fetchAIConfig = useCallback(async () => {
         try {
             const response = await api.get('/ai-config');
             if (response.data.config) {
@@ -116,7 +111,36 @@ export default function SettingsPage() {
         } catch (error) {
             console.error('Erro ao carregar config IA:', error);
         }
-    };
+    }, []);
+
+    const fetchSettings = useCallback(async () => {
+        try {
+            const response = await api.get('/settings');
+            setSettings(response.data);
+            if (response.data.evolutionUrl) {
+                setEvolutionUrl(response.data.evolutionUrl);
+            }
+            if (response.data.instanceName) {
+                setInstanceName(response.data.instanceName);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar configurações:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchServers = useCallback(async () => {
+        setLoadingServers(true);
+        try {
+            const response = await api.get('/whatsapp-servers');
+            setServersData(response.data);
+        } catch (error) {
+            console.error('Erro ao carregar servidores:', error);
+        } finally {
+            setLoadingServers(false);
+        }
+    }, []);
 
     const saveAIConfig = async () => {
         setSavingAi(true);
@@ -134,34 +158,12 @@ export default function SettingsPage() {
         }
     };
 
-    const fetchSettings = async () => {
-        try {
-            const response = await api.get('/settings');
-            setSettings(response.data);
-            if (response.data.evolutionUrl) {
-                setEvolutionUrl(response.data.evolutionUrl);
-            }
-            if (response.data.instanceName) {
-                setInstanceName(response.data.instanceName);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar configurações:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        fetchSettings();
+        fetchServers();
+        fetchAIConfig();
+    }, [fetchSettings, fetchServers, fetchAIConfig]);
 
-    const fetchServers = async () => {
-        setLoadingServers(true);
-        try {
-            const response = await api.get('/whatsapp-servers');
-            setServersData(response.data);
-        } catch (error) {
-            console.error('Erro ao carregar servidores:', error);
-        } finally {
-            setLoadingServers(false);
-        }
-    };
 
     const handleTestLegacy = async () => {
         if (!evolutionUrl || !evolutionKey || !instanceName) {
@@ -295,7 +297,7 @@ export default function SettingsPage() {
             }, 3000);
         }
         return () => clearInterval(interval);
-    }, [showQrModal, activeQrServerId, qrData.connected]);
+    }, [showQrModal, activeQrServerId, qrData.connected, fetchQrCode]);
 
     const handleToggleServer = async (serverId: number, isActive: boolean) => {
         try {
@@ -887,7 +889,7 @@ export default function SettingsPage() {
                             {qrData.connected ? (
                                 <CheckCircle className="w-20 h-20 text-green-500" />
                             ) : qrData.base64 ? (
-                                <img src={qrData.base64} alt="QR Code" className="w-64 h-64 border rounded p-2" />
+                                <Image src={qrData.base64} alt="QR Code" width={256} height={256} className="border rounded p-2" />
                             ) : (
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
                             )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Users, Edit2, X, Check, Search } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -29,11 +29,7 @@ export default function GroupsPage() {
 
     const toast = useToast();
 
-    useEffect(() => {
-        fetchGroups();
-    }, []);
-
-    const fetchGroups = async () => {
+    const fetchGroups = useCallback(async () => {
         try {
             const response = await api.get('/groups');
             setGroups(response.data.groups);
@@ -42,7 +38,11 @@ export default function GroupsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchGroups();
+    }, [fetchGroups]);
 
     const handleSync = async () => {
         setSyncing(true);

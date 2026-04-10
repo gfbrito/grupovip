@@ -56,13 +56,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         addToastInternal(options.message, options.type, options.title);
     }, [addToastInternal]);
 
+    const contextValue = React.useMemo(() => ({
+        toasts,
+        success,
+        error,
+        warning,
+        info,
+        remove,
+        addToast
+    }), [toasts, success, error, warning, info, remove, addToast]);
+
     return (
-        <ToastContext.Provider value={{ toasts, success, error, warning, info, remove, addToast }}>
+        <ToastContext.Provider value={contextValue}>
             {children}
             <ToastContainer toasts={toasts} onRemove={remove} />
         </ToastContext.Provider>
     );
 }
+
+export { ToastContext };
+export default ToastProvider;
 
 export function useToast() {
     const context = useContext(ToastContext);

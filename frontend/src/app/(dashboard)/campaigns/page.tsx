@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Send, Pause, Play, Trash2, Eye, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Card from '@/components/ui/Card';
@@ -44,11 +44,7 @@ export default function CampaignsPage() {
 
     const toast = useToast();
 
-    useEffect(() => {
-        fetchCampaigns();
-    }, []);
-
-    const fetchCampaigns = async () => {
+    const fetchCampaigns = useCallback(async () => {
         try {
             const response = await api.get('/campaigns');
             setCampaigns(response.data.campaigns);
@@ -57,7 +53,11 @@ export default function CampaignsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchCampaigns();
+    }, [fetchCampaigns]);
 
     const handleStart = async (id: number) => {
         try {

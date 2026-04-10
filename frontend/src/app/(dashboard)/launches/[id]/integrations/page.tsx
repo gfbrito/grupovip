@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Webhook,
@@ -21,14 +21,32 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface Webhook {
+    id: number;
+    name: string;
+    url: string;
+    events: string[];
+    isActive: boolean;
+    createdAt: string;
+}
+
 export default function LaunchIntegrationsPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [webhooks, setWebhooks] = useState<any[]>([]);
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [webhooks, setWebhooks] = useState<Webhook[]>([]);
 
     // Tracking State
     const [trackingData, setTrackingData] = useState({
@@ -54,13 +72,7 @@ export default function LaunchIntegrationsPage() {
         { value: 'MESSAGE_SENT', label: 'Mensagem Enviada' },
     ];
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [id]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [launchRes, webhooksRes] = await Promise.all([
@@ -92,7 +104,13 @@ export default function LaunchIntegrationsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+    }, [id, fetchData]);
 
     const handleSaveTracking = async () => {
         try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
     MessageSquare,
@@ -39,6 +39,23 @@ interface LeadMessage {
     lead?: { id: number; phone: string; name: string | null };
 }
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface InboxStats {
+    PENDING: number;
+    APPROVED: number;
+    REJECTED: number;
+    IGNORED: number;
+    TOTAL?: number;
+}
+
 interface AIConfig {
     isEnabled: boolean;
     autoReply: boolean;
@@ -51,9 +68,9 @@ export default function LaunchInboxPage() {
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
+    const [launch, setLaunch] = useState<Launch | null>(null);
     const [messages, setMessages] = useState<LeadMessage[]>([]);
-    const [stats, setStats] = useState<any>({});
+    const [stats, setStats] = useState<InboxStats>({ PENDING: 0, APPROVED: 0, REJECTED: 0, IGNORED: 0 });
     const [filter, setFilter] = useState<string>('PENDING');
 
     // AI Config
@@ -74,18 +91,18 @@ export default function LaunchInboxPage() {
             fetchMessages();
             fetchAIConfig();
         }
-    }, [id, filter]);
+    }, [id, filter, fetchLaunch, fetchMessages, fetchAIConfig]);
 
-    const fetchLaunch = async () => {
+    const fetchLaunch = useCallback(async () => {
         try {
             const res = await api.get(`/launches/${id}`);
             setLaunch(res.data.launch);
         } catch (error) {
             console.error(error);
         }
-    };
+    }, [id]);
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         try {
             setLoading(true);
             const res = await api.get(`/launches/${id}/inbox?status=${filter}`);
@@ -96,9 +113,9 @@ export default function LaunchInboxPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, filter]);
 
-    const fetchAIConfig = async () => {
+    const fetchAIConfig = useCallback(async () => {
         try {
             const res = await api.get(`/launches/${id}/ai-config`);
             if (res.data.config) {
@@ -107,7 +124,7 @@ export default function LaunchInboxPage() {
         } catch (error) {
             console.error(error);
         }
-    };
+    }, [id]);
 
     const handleApprove = async (messageId: number, reply?: string) => {
         try {

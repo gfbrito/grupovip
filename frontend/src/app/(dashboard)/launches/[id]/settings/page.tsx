@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     Settings,
@@ -19,6 +19,18 @@ import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 import ConfirmationModal from '@/components/ui/ConfirmationModal';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+    memberLimit: number;
+    autoCreateGroup: boolean;
+    autoCreateAt: number;
+}
+
 export default function LaunchSettingsPage() {
     const params = useParams();
     const id = params?.id as string;
@@ -27,7 +39,7 @@ export default function LaunchSettingsPage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [launch, setLaunch] = useState<any>(null);
+    const [launch, setLaunch] = useState<Launch | null>(null);
 
     // Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -44,13 +56,7 @@ export default function LaunchSettingsPage() {
         logoUrl: '',
     });
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [id]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/launches/${id}`);
@@ -72,7 +78,13 @@ export default function LaunchSettingsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+    }, [id, fetchData]);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();

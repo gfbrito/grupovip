@@ -22,6 +22,7 @@ import {
     X,
     RefreshCw
 } from 'lucide-react';
+import Image from 'next/image';
 import api from '@/lib/api';
 import { useToast } from '@/contexts/ToastContext';
 import LaunchHeader from '@/components/launch/LaunchHeader';
@@ -32,15 +33,50 @@ import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 import WhatsAppText from '@/components/ui/WhatsAppText';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface PrivateMessage {
+    id: number;
+    title: string;
+    content: string;
+    type: string;
+    mediaUrl: string | null;
+    scheduledAt: string;
+    delayMin: number;
+    delayMax: number;
+    status: string;
+    logs: Array<{
+        id: number;
+        leadPhone: string;
+        status: string;
+        sentAt: string | null;
+        error: string | null;
+    }>;
+}
+
+interface PrivateMessageStats {
+    totalMessages: number;
+    totalSent: number;
+    totalFailed: number;
+    pendingCount: number;
+}
+
 export default function PrivateMessagesPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [messages, setMessages] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>(null);
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [messages, setMessages] = useState<PrivateMessage[]>([]);
+    const [stats, setStats] = useState<PrivateMessageStats | null>(null);
 
     // Create Form State
     const [showForm, setShowForm] = useState(false);
@@ -89,13 +125,7 @@ export default function PrivateMessagesPage() {
         }
     };
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-    }, [id]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [launchRes, msgsRes, statsRes] = await Promise.all([
@@ -117,7 +147,13 @@ export default function PrivateMessagesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+    }, [id, fetchData]);
 
     const handleCreate = async (e: React.FormEvent, sendNow: boolean = false) => {
         e.preventDefault();
@@ -356,7 +392,7 @@ export default function PrivateMessagesPage() {
                                             {formData.type !== 'TEXT' && formData.mediaUrl && (
                                                 <div className="bg-slate-100 rounded mb-1 h-32 flex items-center justify-center text-slate-400 overflow-hidden">
                                                     {formData.type === 'IMAGE' ? (
-                                                        <img src={formData.mediaUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                                        <Image src={formData.mediaUrl} alt="Preview" fill className="object-cover" />
                                                     ) : (
                                                         <div className="flex flex-col items-center">
                                                             {formData.type === 'VIDEO' && <Video className="w-8 h-8" />}
@@ -399,7 +435,7 @@ export default function PrivateMessagesPage() {
                                     ) : msg.mediaUrl ? (
                                         <div className="relative w-full h-24 bg-slate-200 rounded overflow-hidden">
                                             {msg.type === 'IMAGE' ? (
-                                                <img src={msg.mediaUrl} className="w-full h-full object-cover" alt="Media" />
+                                                <Image src={msg.mediaUrl} fill className="object-cover" alt="Media" />
                                             ) : (
                                                 <div className="absolute inset-0 flex items-center justify-center text-slate-500">
                                                     {msg.type === 'VIDEO' ? <Video /> : <Mic />}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { 
     Users, 
     Rocket, 
@@ -45,11 +45,7 @@ export default function AdminUsersPage() {
     // Estado do modal de alteração de plano/role (simples)
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [statsRes, usersRes] = await Promise.all([
@@ -63,7 +59,11 @@ export default function AdminUsersPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleDeleteUser = async (id: number) => {
         if (!confirm('Tem certeza que deseja DELETAR este usuário? Essa ação é irreversível.')) return;

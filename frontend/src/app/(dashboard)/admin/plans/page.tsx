@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Crown,
     Users,
@@ -55,12 +55,7 @@ export default function AdminPlansPage() {
         }
     }, [user, router, toast]);
 
-    // Carregar planos
-    useEffect(() => {
-        fetchPlans();
-    }, []);
-
-    const fetchPlans = async () => {
+    const fetchPlans = useCallback(async () => {
         try {
             const response = await api.get('/plans');
             setPlans(response.data);
@@ -69,7 +64,12 @@ export default function AdminPlansPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [toast]);
+
+    // Carregar planos
+    useEffect(() => {
+        fetchPlans();
+    }, [fetchPlans]);
 
     const handleSavePlan = async (plan: Partial<Plan>) => {
         setSaving(true);

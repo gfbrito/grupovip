@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Search,
@@ -26,15 +26,51 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface LeadGroup {
+    groupId: number;
+    isActive: boolean;
+    joinedAt: string;
+    leftAt: string | null;
+    group: {
+        number: number;
+    };
+}
+
+interface Lead {
+    id: number;
+    phone: string;
+    name: string | null;
+    status: string;
+    classification: string;
+    score: number;
+    groups: LeadGroup[];
+}
+
+interface LeadStats {
+    total: number;
+    active: number;
+    inactive: number;
+    blocked: number;
+}
+
 export default function LaunchLeadsPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [leads, setLeads] = useState<any[]>([]);
-    const [stats, setStats] = useState<any>(null);
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [leads, setLeads] = useState<Lead[]>([]);
+    const [stats, setStats] = useState<LeadStats | null>(null);
 
     // Filtros
     const [search, setSearch] = useState('');
@@ -65,14 +101,7 @@ export default function LaunchLeadsPage() {
         };
     }, []);
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-        }
-
-    }, [id, statusFilter, classificationFilter, sortOrder]); // Recarregar quando filtro mudar
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
 
@@ -103,7 +132,14 @@ export default function LaunchLeadsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, search, statusFilter, classificationFilter, sortOrder, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+        }
+
+    }, [id, fetchData]); // Recarregar quando id ou fetchData mudar
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Users,
@@ -17,22 +17,34 @@ import LaunchHeader from '@/components/launch/LaunchHeader';
 import LaunchTabs from '@/components/launch/LaunchTabs';
 import Card from '@/components/ui/Card';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface LaunchStats {
+    totalLeads: number;
+    totalGroups: number;
+    totalConversions: number;
+    conversionRate: number;
+    leadsToday?: number;
+    activeGroups?: number;
+}
+
 export default function LaunchDashboardPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [stats, setStats] = useState<any>(null);
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [stats, setStats] = useState<LaunchStats | null>(null);
 
-    useEffect(() => {
-        if (id) {
-            fetchLaunch();
-        }
-    }, [id]);
-
-    const fetchLaunch = async () => {
+    const fetchLaunch = useCallback(async () => {
         try {
             setLoading(true);
             const response = await api.get(`/launches/${id}`);
@@ -48,7 +60,13 @@ export default function LaunchDashboardPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
+
+    useEffect(() => {
+        if (id) {
+            fetchLaunch();
+        }
+    }, [id, fetchLaunch]);
 
     if (loading) {
         return (

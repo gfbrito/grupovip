@@ -8,7 +8,7 @@ interface SwitchProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
 }
 
-export default function Switch({ checked, onCheckedChange, label, className, ...props }: SwitchProps) {
+export function Switch({ checked, onCheckedChange, label, className, ...props }: SwitchProps) {
     return (
         <label className={`inline-flex items-center cursor-pointer ${className}`}>
             <input
@@ -23,3 +23,5 @@ export default function Switch({ checked, onCheckedChange, label, className, ...
         </label>
     );
 }
+
+export default Switch;

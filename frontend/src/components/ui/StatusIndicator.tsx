@@ -6,7 +6,7 @@ interface StatusIndicatorProps {
     className?: string;
 }
 
-export default function StatusIndicator({ status, label, className = '' }: StatusIndicatorProps) {
+export function StatusIndicator({ status, label, className = '' }: StatusIndicatorProps) {
     const colors = {
         connected: 'bg-green-500',
         disconnected: 'bg-red-500',
@@ -30,3 +30,5 @@ export default function StatusIndicator({ status, label, className = '' }: Statu
         </div>
     );
 }
+
+export default StatusIndicator;

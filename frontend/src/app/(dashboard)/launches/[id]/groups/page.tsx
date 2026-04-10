@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Plus,
@@ -27,15 +27,49 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 
+interface Launch {
+    id: number;
+    name: string;
+    description: string | null;
+    slug: string;
+    logoUrl: string | null;
+    status: string;
+}
+
+interface Group {
+    id: number;
+    groupId: string;
+    number: number;
+    name: string;
+    nickname: string | null;
+    inviteUrl: string | null;
+    participantsCount: number;
+    maxParticipants: number;
+    isActive: boolean;
+    isFull: boolean;
+    isLocked: boolean;
+    lastSync: string | null;
+}
+
+interface QueueItem {
+    id: string;
+    launchId: number;
+    amount: number;
+    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+    progress: number;
+    message: string;
+    createdAt: string;
+}
+
 export default function LaunchGroupsPage() {
     const params = useParams();
     const id = params?.id as string;
     const { addToast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [launch, setLaunch] = useState<any>(null);
-    const [groups, setGroups] = useState<any[]>([]);
-    const [queue, setQueue] = useState<any[]>([]);
+    const [launch, setLaunch] = useState<Launch | null>(null);
+    const [groups, setGroups] = useState<Group[]>([]);
+    const [queue, setQueue] = useState<QueueItem[]>([]);
 
     // Estado para expansão de linha
     const [expandedGroupId, setExpandedGroupId] = useState<number | null>(null);
@@ -68,9 +102,9 @@ export default function LaunchGroupsPage() {
             }, 5000);
             return () => clearInterval(interval);
         }
-    }, [id]);
+    }, [id, fetchData, fetchQueue]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             setLoading(true);
             const [launchRes, groupsRes, queueRes] = await Promise.all([
@@ -92,9 +126,9 @@ export default function LaunchGroupsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, addToast]);
 
-    const fetchQueue = async () => {
+    const fetchQueue = useCallback(async () => {
         try {
             const response = await api.get(`/launches/${id}/groups/queue`);
             setQueue(response.data.queue);
@@ -106,7 +140,7 @@ export default function LaunchGroupsPage() {
         } catch (error) {
             console.error('Erro ao atualizar fila:', error);
         }
-    };
+    }, [id, queue.length]);
 
     const handleCreateGroups = async () => {
         if (createAmount < 1) return;
@@ -183,9 +217,9 @@ export default function LaunchGroupsPage() {
             fetchAvailableGroups();
             setSelectedGroupIds([]);
         }
-    }, [isLinking]);
+    }, [isLinking, fetchAvailableGroups]);
 
-    const fetchAvailableGroups = async () => {
+    const fetchAvailableGroups = useCallback(async () => {
         try {
             setGlobalLoading(true);
             const res = await api.get('/groups');
@@ -196,7 +230,7 @@ export default function LaunchGroupsPage() {
         } finally {
             setGlobalLoading(false);
         }
-    };
+    }, [addToast]);
 
     const handleGlobalSync = async () => {
         try {
