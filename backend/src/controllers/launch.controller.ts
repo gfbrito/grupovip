@@ -354,7 +354,7 @@ export const generateMagicLaunch = async (req: AuthenticatedRequest, res: Respon
 
                 await tx.campaign.create({
                     data: {
-                        name: \`Mensagem Dia \${msg.day}\`,
+                        name: `Mensagem Dia ${msg.day}`,
                         message: msg.content,
                         status: 'SCHEDULED',
                         scheduledAt: scheduleTime,
