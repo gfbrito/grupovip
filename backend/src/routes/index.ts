@@ -69,8 +69,8 @@ router.use(uploadRoutes);
 // Outras Rotas (Grupos, Servidores, etc)es
 // ========================
 router.get('/settings', authMiddleware, settingsController.getSettings);
-router.put('/settings', authMiddleware, settingsController.updateSettings);
-router.post('/settings/test', authMiddleware, settingsController.testConnection);
+router.put('/settings', authMiddleware, requireMaster(), settingsController.updateSettings);
+router.post('/settings/test', authMiddleware, requireMaster(), settingsController.testConnection);
 
 // ========================
 // WhatsApp Servers Routes
@@ -227,8 +227,8 @@ router.put('/launches/:id/ai-config', authMiddleware, leadMessagesController.upd
 // ========================
 // Config Global de IA (admin only)
 // ========================
-router.get('/ai-config', authMiddleware, leadMessagesController.getAIConfig);
-router.put('/ai-config', authMiddleware, leadMessagesController.updateAIConfig);
+router.get('/ai-config', authMiddleware, requireMaster(), leadMessagesController.getAIConfig);
+router.put('/ai-config', authMiddleware, requireMaster(), leadMessagesController.updateAIConfig);
 
 // ========================
 // AI Credits
@@ -242,10 +242,10 @@ router.post('/ai-credits/capture', authMiddleware, aiCreditsController.capturePu
 // ========================
 // Webhook Global (Evolution API)
 // ========================
-router.get('/webhooks/config', authMiddleware, webhookController.getConfig);
-router.post('/webhooks/config/regenerate', authMiddleware, webhookController.regenerateToken);
-router.post('/webhooks/config/toggle', authMiddleware, webhookController.toggle);
-router.get('/webhooks/logs', authMiddleware, webhookController.getLogs);
+router.get('/webhooks/config', authMiddleware, requireMaster(), webhookController.getConfig);
+router.post('/webhooks/config/regenerate', authMiddleware, requireMaster(), webhookController.regenerateToken);
+router.post('/webhooks/config/toggle', authMiddleware, requireMaster(), webhookController.toggle);
+router.get('/webhooks/logs', authMiddleware, requireMaster(), webhookController.getLogs);
 
 // Endpoint público para receber webhooks da Evolution
 router.post('/webhooks/evolution', webhookController.handleEvolution);

@@ -8,6 +8,7 @@ import { prisma } from '../config/database';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { whatsappProvider } from '../services/whatsapp-provider.service';
 import { BaileysProvider } from '../services/providers/baileys.provider';
+import { AppConfig } from '../config/vault';
 
 /**
  * Mascara a API key mantendo apenas os últimos 4 caracteres
@@ -23,7 +24,15 @@ function maskApiKey(key: string | null | undefined): string | null {
  */
 export async function listServers(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
+        const userId = (req.user as any).id;
+        const isAdmin = (req.user as any).role === 'ADMIN';
+        const isMaster = (req.user as any).role === 'MASTER';
+
+        // Filtro por usuário se não for MASTER/ADMIN
+        const where = !isMaster && !isAdmin ? { userId } : {};
+
         const servers = await prisma.whatsAppServer.findMany({
+            where,
             orderBy: { priority: 'asc' },
         });
 
@@ -72,6 +81,16 @@ export async function getServer(req: AuthenticatedRequest, res: Response): Promi
             return;
         }
 
+        // Verificar posse se não for MASTER/ADMIN
+        const userId = (req.user as any).id;
+        const isMaster = (req.user as any).role === 'MASTER';
+        const isAdmin = (req.user as any).role === 'ADMIN';
+
+        if (!isMaster && !isAdmin && server.userId !== userId) {
+            res.status(403).json({ error: 'Acesso negado' });
+            return;
+        }
+
         res.json({
             ...server,
             apiKey: maskApiKey(server.apiKey),
@@ -88,16 +107,47 @@ export async function getServer(req: AuthenticatedRequest, res: Response): Promi
  */
 export async function createServer(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-        const { name, type, url, apiKey, instanceName } = req.body;
+        const { name, type, instanceName } = req.body;
+        let { url, apiKey } = req.body;
+        const userId = (req.user as any).id;
+        const isMaster = (req.user as any).role === 'MASTER';
 
-        // Validações
-        if (!name || !type || !url) {
-            res.status(400).json({ error: 'Nome, tipo e URL são obrigatórios' });
+        // Validações básicas
+        if (!name || !type) {
+            res.status(400).json({ error: 'Nome e tipo são obrigatórios' });
             return;
         }
 
         if (!['BAILEYS', 'EVOLUTION', 'WEBJS'].includes(type)) {
             res.status(400).json({ error: 'Tipo inválido. Use: BAILEYS, EVOLUTION ou WEBJS' });
+            return;
+        }
+
+        // Se for CLIENTE (não Master), herda configurações globais da Evolution
+        if (!isMaster && type === 'EVOLUTION') {
+            const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+            if (!config || !config.isConfigured) {
+                res.status(503).json({
+                    error: 'Sistema em manutenção',
+                    message: 'Estamos passando por uma instabilidade no servidor, nossa equipe já está trabalhando para resolver.',
+                    code: 'SYSTEM_UNCONFIGURED'
+                });
+                return;
+            }
+            url = config.evolutionUrl;
+            apiKey = config.evolutionKey;
+            
+            if (!instanceName) {
+                res.status(400).json({ error: 'O nome da instância é obrigatório' });
+                return;
+            }
+        } else if (!isMaster && type === 'BAILEYS') {
+            // Se for Baileys e cliente, usa a URL do próprio backend
+            url = process.env.BASE_URL || 'http://localhost:3001';
+        }
+
+        if (!url) {
+            res.status(400).json({ error: 'A URL do servidor é obrigatória' });
             return;
         }
 
@@ -107,6 +157,27 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
         } catch {
             res.status(400).json({ error: 'URL inválida' });
             return;
+        }
+
+        // Verificar limite do plano se não for MASTER
+        if (!isMaster) {
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                include: { plan: true }
+            });
+            
+            const serverCount = await prisma.whatsAppServer.count({
+                where: { userId }
+            });
+
+            const maxServers = user?.plan?.maxWhatsAppServers || 1;
+            if (serverCount >= maxServers) {
+                res.status(403).json({ 
+                    error: 'Limite do plano atingido',
+                    message: `Seu plano atual permite apenas ${maxServers} conexão(ões). Faça um upgrade para adicionar mais.`
+                });
+                return;
+            }
         }
 
         // Encontrar próxima prioridade
@@ -125,6 +196,7 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
                 priority: nextPriority,
                 isActive: false,
                 status: 'PENDING',
+                userId,
             },
         });
 
@@ -143,9 +215,10 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
  * Atualiza servidor existente
  */
 export async function updateServer(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
         const { id } = req.params;
         const { name, url, apiKey, instanceName, priority } = req.body;
+        const userId = (req.user as any).id;
+        const isMaster = (req.user as any).role === 'MASTER';
 
         const server = await prisma.whatsAppServer.findUnique({
             where: { id: parseInt(id) },
@@ -156,7 +229,19 @@ export async function updateServer(req: AuthenticatedRequest, res: Response): Pr
             return;
         }
 
-        // Validar URL se fornecida
+        // Verificar posse
+        if (!isMaster && server.userId !== userId) {
+            res.status(403).json({ error: 'Acesso negado' });
+            return;
+        }
+
+        // Se não for Master, não pode alterar URL ou API Key (pois são herdadas ou fixas)
+        if (!isMaster && (url || apiKey)) {
+            res.status(403).json({ error: 'Você não tem permissão para alterar as configurações de infraestrutura' });
+            return;
+        }
+
+        // Validar URL se fornecida (apenas Master chega aqui)
         if (url) {
             try {
                 new URL(url);
@@ -207,6 +292,14 @@ export async function deleteServer(req: AuthenticatedRequest, res: Response): Pr
             return;
         }
 
+        // Verificar posse
+        const userId = (req.user as any).id;
+        const isMaster = (req.user as any).role === 'MASTER';
+        if (!isMaster && server.userId !== userId) {
+            res.status(403).json({ error: 'Acesso negado' });
+            return;
+        }
+
         await prisma.whatsAppServer.delete({
             where: { id: parseInt(id) },
         });
@@ -237,6 +330,14 @@ export async function testServer(req: AuthenticatedRequest, res: Response): Prom
 
             if (!server) {
                 res.status(404).json({ error: 'Servidor não encontrado' });
+                return;
+            }
+
+            // Verificar posse
+            const userId = (req.user as any).id;
+            const isMaster = (req.user as any).role === 'MASTER';
+            if (!isMaster && server.userId !== userId) {
+                res.status(403).json({ error: 'Acesso negado' });
                 return;
             }
 
@@ -356,6 +457,14 @@ export async function toggleServer(req: AuthenticatedRequest, res: Response): Pr
             return;
         }
 
+        // Verificar posse
+        const userId = (req.user as any).id;
+        const isMaster = (req.user as any).role === 'MASTER';
+        if (!isMaster && server.userId !== userId) {
+            res.status(403).json({ error: 'Acesso negado' });
+            return;
+        }
+
         // Não permitir ativar servidor sem teste bem-sucedido
         if (isActive && server.status !== 'CONNECTED') {
             res.status(400).json({ error: 'Teste a conexão antes de ativar o servidor' });
@@ -448,6 +557,24 @@ export async function reorderServers(req: AuthenticatedRequest, res: Response): 
 export async function getBaileysQr(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
         const { id } = req.params;
+        const userId = (req.user as any).id;
+        const isMaster = (req.user as any).role === 'MASTER';
+
+        const server = await prisma.whatsAppServer.findUnique({
+            where: { id: parseInt(id) }
+        });
+
+        if (!server) {
+            res.status(404).json({ error: 'Servidor não encontrado' });
+            return;
+        }
+
+        // Verificar posse
+        if (!isMaster && server.userId !== userId) {
+            res.status(403).json({ error: 'Acesso negado' });
+            return;
+        }
+
         const provider = await whatsappProvider.getProviderById(parseInt(id));
 
         // Verificar se realmente é o provider Baileys e extrair a prop especifica

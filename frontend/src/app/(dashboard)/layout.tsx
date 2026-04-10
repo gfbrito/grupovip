@@ -273,16 +273,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 <AlertTriangle className="w-5 h-5 text-amber-600" />
                             </div>
                             <div className="flex-1">
-                                <p className="text-sm font-medium text-amber-800">
-                                    API não configurada. Configure a Evolution API para começar a disparar mensagens.
-                                </p>
+                                {user.role === 'MASTER' ? (
+                                    <p className="text-sm font-medium text-amber-800">
+                                        API não configurada. Configure a Evolution API no Cofre para liberar o sistema.
+                                    </p>
+                                ) : (
+                                    <p className="text-sm font-medium text-amber-800">
+                                        Estamos realizando uma manutenção preventiva para melhorar a estabilidade. Voltaremos em breve!
+                                    </p>
+                                )}
                             </div>
-                            <Link
-                                href="/settings"
-                                className="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition"
-                            >
-                                Configurar Agora
-                            </Link>
+                            {user.role === 'MASTER' && (
+                                <Link
+                                    href="/admin/settings"
+                                    className="px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition"
+                                >
+                                    Configurar no Cofre
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )}

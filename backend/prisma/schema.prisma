@@ -55,6 +55,7 @@ model User {
   campaigns Campaign[]
   launches  Launch[]
   aiCredits UserAICredits?
+  servers   WhatsAppServer[]
 }
 
 // ==================== CRÉDITOS DE IA ====================
@@ -146,6 +147,8 @@ model WhatsAppServer {
   status       String   @default("PENDING") // PENDING, CONNECTED, DISCONNECTED, ERROR
   lastCheck    DateTime?
   lastError    String?
+  userId       Int?
+  user         User?    @relation(fields: [userId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

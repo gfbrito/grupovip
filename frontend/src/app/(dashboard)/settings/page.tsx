@@ -370,24 +370,28 @@ export default function SettingsPage() {
                         ? 'text-blue-600 border-b-2 border-blue-600'
                         : 'text-slate-500 hover:text-slate-700'}`}
                 >
-                    Servidores WhatsApp
+                    Conexões WhatsApp
                 </button>
-                <button
-                    onClick={() => setActiveTab('ai')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'ai'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    🤖 Configuração IA
-                </button>
-                <button
-                    onClick={() => setActiveTab('legacy')}
-                    className={`px-4 py-2 font-medium ${activeTab === 'legacy'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Configuração Legada
-                </button>
+                {user?.role === 'MASTER' && (
+                    <>
+                        <button
+                            onClick={() => setActiveTab('ai')}
+                            className={`px-4 py-2 font-medium ${activeTab === 'ai'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            🤖 Configuração IA
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('legacy')}
+                            className={`px-4 py-2 font-medium ${activeTab === 'legacy'
+                                ? 'text-blue-600 border-b-2 border-blue-600'
+                                : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Configuração Legada
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Servers Tab */}
@@ -814,41 +818,49 @@ export default function SettingsPage() {
 
                         <div className="space-y-4">
                             <Input
-                                label="Nome"
-                                placeholder="Ex: Servidor Principal"
+                                label="Nome da Conexão"
+                                placeholder="Ex: Meu Celular"
                                 value={newServer.name}
                                 onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
                             />
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Tipo
-                                </label>
-                                <select
-                                    value={newServer.type}
-                                    onChange={(e) => setNewServer({
-                                        ...newServer,
-                                        type: e.target.value as 'BAILEYS' | 'EVOLUTION' | 'WEBJS'
-                                    })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="BAILEYS">Baileys</option>
-                                    <option value="EVOLUTION">Evolution API</option>
-                                    <option value="WEBJS">WhatsApp Web.js</option>
-                                </select>
-                            </div>
+                            {user?.role === 'MASTER' ? (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        Tipo
+                                    </label>
+                                    <select
+                                        value={newServer.type}
+                                        onChange={(e) => setNewServer({
+                                            ...newServer,
+                                            type: e.target.value as 'BAILEYS' | 'EVOLUTION' | 'WEBJS'
+                                        })}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="BAILEYS">Baileys</option>
+                                        <option value="EVOLUTION">Evolution API</option>
+                                        <option value="WEBJS">WhatsApp Web.js</option>
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg">
+                                    <p className="text-xs text-blue-700 font-medium">Infraestrutura Configurada</p>
+                                    <p className="text-[10px] text-blue-600">Este servidor utilizará a infraestrutura otimizada do sistema.</p>
+                                </div>
+                            )}
 
-                                {newServer.type !== 'BAILEYS' && (
-                                    <Input
-                                        label="URL do Servidor"
-                                        placeholder="https://..."
-                                        value={newServer.url}
-                                        onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
-                                    />
-                                )}
+                            {(user?.role === 'MASTER' || newServer.type !== 'BAILEYS') && user?.role === 'MASTER' && (
+                                <Input
+                                    label="URL do Servidor"
+                                    placeholder="https://..."
+                                    value={newServer.url}
+                                    onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
+                                />
+                            )}
 
-                                {newServer.type === 'EVOLUTION' && (
-                                    <>
+                            {newServer.type === 'EVOLUTION' && (
+                                <>
+                                    {user?.role === 'MASTER' && (
                                         <Input
                                             label="API Key"
                                             type="password"
@@ -856,15 +868,21 @@ export default function SettingsPage() {
                                             value={newServer.apiKey}
                                             onChange={(e) => setNewServer({ ...newServer, apiKey: e.target.value })}
                                         />
-                                        <Input
-                                            label="Nome da Instância"
-                                            placeholder="nome-da-instancia"
-                                            value={newServer.instanceName}
-                                            onChange={(e) => setNewServer({ ...newServer, instanceName: e.target.value })}
-                                        />
-                                    </>
-                                )}
-                            </div>
+                                    )}
+                                    <Input
+                                        label="Nome da Instância"
+                                        placeholder="Ex: dunder-mifflin"
+                                        value={newServer.instanceName}
+                                        onChange={(e) => setNewServer({ ...newServer, instanceName: e.target.value })}
+                                    />
+                                    {user?.role !== 'MASTER' && (
+                                        <p className="text-[10px] text-slate-400 mt-1">
+                                            Escolha um nome único para sua instância no servidor.
+                                        </p>
+                                    )}
+                                </>
+                            )}
+                        </div>
 
                         <div className="flex justify-end gap-3 mt-6">
                             <Button variant="secondary" onClick={() => setShowAddModal(false)}>
