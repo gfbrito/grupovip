@@ -1,0 +1,555 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== PLANOS DE ASSINATURA ====================
+
+model Plan {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique  // FREE, STARTER, PRO, ENTERPRISE
+  displayName String             // "Gratuito", "Iniciante", "Pro", "Enterprise"
+  
+  // Limites
+  maxLaunches        Int @default(1)
+  maxGroupsPerLaunch Int @default(3)
+  maxLeads           Int @default(500)
+  maxWhatsAppServers Int @default(1)
+  
+  // Features
+  aiEnabled              Boolean @default(false)
+  privateMessagesEnabled Boolean @default(false)
+  webhooksEnabled        Boolean @default(false)
+  
+  // AI Credits
+  aiTokensPerMonth   Int @default(0)     // Cota mensal inclusa no plano (0 = sem IA)
+  aiCreditsPerOperation Int @default(1)  // Créditos cobrados por resposta da IA
+  
+  // Pricing (para referência)
+  price         Float   @default(0)
+  billingPeriod String  @default("MONTHLY") // MONTHLY, YEARLY
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("USER") // USER, ADMIN, MASTER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  planId Int @default(1)
+  plan   Plan @relation(fields: [planId], references: [id])
+
+  campaigns Campaign[]
+  launches  Launch[]
+  aiCredits UserAICredits?
+}
+
+// ==================== CRÉDITOS DE IA ====================
+
+model UserAICredits {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  user             User     @relation(fields: [userId], references: [id])
+  
+  monthlyQuota     Int      @default(0)   // Renovado todo mês conforme plano
+  monthlyUsed      Int      @default(0)   // Consumido no ciclo atual
+  extraCredits     Int      @default(0)   // Créditos extras comprados
+  lastResetAt      DateTime @default(now()) // Última renovação mensal
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  transactions     AITransaction[]
+  purchases        AICreditPurchase[]
+}
+
+model AITransaction {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  credits      UserAICredits @relation(fields: [userId], references: [userId])
+  
+  operation    String   // LEAD_REPLY, LAUNCH_GENERATION, REGENERATE_REPLY, etc.
+  creditsUsed  Int      // Créditos consumidos na operação
+  model        String   // Modelo utilizado
+  source       String   @default("MONTHLY") // MONTHLY | EXTRA
+  
+  refId        Int?     // ID do lançamento, mensagem, etc.
+  refType      String?  // "LaunchMessage", "LeadMessage", etc.
+  
+  createdAt    DateTime @default(now())
+}
+
+model AICreditPurchase {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  credits       UserAICredits @relation(fields: [userId], references: [userId])
+  
+  packageName   String   // ex: "Pacote 50K", "Pacote 200K"
+  tokensAmount  Int      // Tokens concedidos
+  priceBRL      Float    // Valor pago em R$
+  status        String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  
+  paymentMethod String?  // PIX, CREDIT_CARD, PAYPAL
+  paymentRef    String?  // ID externo do pagamento
+  paidAt        DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Singleton: sempre id=1 (mantido para compatibilidade)
+model AppConfig {
+  id           Int      @id @default(1)
+  evolutionUrl String?
+  evolutionKey String?
+  instanceName String?
+
+  // SMTP Settings
+  smtpHost     String?
+  smtpPort     String?
+  smtpUser     String?
+  smtpPass     String?
+
+  // PayPal Settings
+  paypalClientId  String?
+  paypalSecret    String?
+  paypalWebhookId String?
+
+  isConfigured Boolean  @default(false)
+  enableAI     Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+}
+
+// Servidores WhatsApp (múltiplos provedores)
+model WhatsAppServer {
+  id           Int      @id @default(autoincrement())
+  name         String   // Nome amigável (ex: "Servidor Principal")
+  type         String   // "BAILEYS", "EVOLUTION" ou "WEBJS"
+  url          String   // URL do servidor/API
+  apiKey       String?  // API Key (para Evolution)
+  instanceName String?  // Nome da instância (para Evolution)
+  isActive     Boolean  @default(false)
+  priority     Int      @default(0)     // Menor = maior prioridade
+  status       String   @default("PENDING") // PENDING, CONNECTED, DISCONNECTED, ERROR
+  lastCheck    DateTime?
+  lastError    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Group {
+  id          Int      @id @default(autoincrement())
+  remoteJid   String   @unique // ID do grupo na Evolution
+  name        String
+  nickname    String? // Apelido customizado
+  isActive    Boolean  @default(true)
+  memberCount Int      @default(0)
+  syncedAt    DateTime @default(now())
+
+  campaignJobs CampaignJob[]
+}
+
+model Campaign {
+  id          Int       @id @default(autoincrement())
+  name        String
+  message     String // Suporta {group_name}, {date}, {time}
+  status      String    @default("DRAFT") // DRAFT, SCHEDULED, RUNNING, PAUSED, COMPLETED, FAILED
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  jobs CampaignJob[]
+  logs MessageLog[]
+}
+
+model CampaignJob {
+  id          Int       @id @default(autoincrement())
+  status      String    @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  attempts    Int       @default(0)
+  lastError   String?
+  processAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  campaignId Int
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  groupId Int
+  group   Group @relation(fields: [groupId], references: [id])
+}
+
+model MessageLog {
+  id        Int      @id @default(autoincrement())
+  type      String // INFO, SUCCESS, WARNING, ERROR
+  message   String
+  metadata  String? // JSON stringified
+  createdAt DateTime @default(now())
+
+  campaignId Int?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+}
+
+// ==================== WEBHOOK GLOBAL ====================
+
+model WebhookConfig {
+  id          Int      @id @default(1)
+  secretToken String   @default(uuid())
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== CONFIG GLOBAL DE IA ====================
+
+model AIConfig {
+  id           Int     @id @default(1)
+  isEnabled    Boolean @default(false)
+  provider     String  @default("OPENAI") // OPENAI, GEMINI
+  apiKey       String?
+  model        String  @default("gpt-4o-mini")
+  systemPrompt String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model WebhookLog {
+  id        Int      @id @default(autoincrement())
+  event     String
+  payload   String
+  processed Boolean  @default(false)
+  error     String?
+  launchId  Int?
+  createdAt DateTime @default(now())
+}
+
+// ==================== LANÇAMENTOS ====================
+
+model Launch {
+  id          Int     @id @default(autoincrement())
+  name        String
+  slug        String  @unique
+  description String?
+  logoUrl     String?
+  status      String  @default("DRAFT") // DRAFT, ACTIVE, PAUSED, ENDED
+
+  // Limites e regras
+  memberLimit     Int     @default(256)
+  autoCreateGroup Boolean @default(true)
+  autoCreateAt    Int     @default(90) // Porcentagem para acionar criação
+  singleGroupOnly Boolean @default(false)
+
+  // Tracking
+  metaPixelEnabled Boolean @default(false)
+  metaPixelId      String?
+  metaPixelEvents  String? // JSON
+  gtmEnabled       Boolean @default(false)
+  gtmId            String?
+
+  // Link
+  linkType String @default("NORMAL") // NORMAL, DEEPLINK
+
+  // Página cheia
+  fullPageMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  groups             LaunchGroup[]
+  leads              LaunchLead[]
+  actions            LaunchAction[]
+  messages           LaunchMessage[]
+  clicks             LaunchClick[]
+  webhooksOut        LaunchWebhook[]
+  groupCreationQueue GroupCreationQueue[]
+  leadMessages       LeadMessage[]
+  aiConfig           LaunchAIConfig?
+  privateMessages    PrivateMessage[]
+  scoreEvents        LeadScoreEvent[]
+}
+
+// ==================== GRUPOS DO LANÇAMENTO ====================
+
+model LaunchGroup {
+  id           Int      @id @default(autoincrement())
+  remoteJid    String   @unique
+  name         String
+  number       Int // Número sequencial do grupo (1, 2, 3...)
+  memberCount  Int      @default(0)
+  isReceiving  Boolean  @default(true)
+  origin       String   @default("CREATED") // CREATED, LINKED
+  originalName String?
+  inviteLink   String?
+  syncedAt     DateTime @default(now())
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  leads LaunchLeadGroup[]
+
+  @@unique([launchId, number])
+}
+
+model GroupCreationQueue {
+  id             Int       @id @default(autoincrement())
+  name           String
+  description    String?
+  photoUrl       String?
+  number         Int
+  status         String    @default("PENDING") // PENDING, CREATING, COMPLETED, FAILED, CANCELLED
+  scheduledAt    DateTime
+  createdAt      DateTime  @default(now())
+  processedAt    DateTime?
+  error          String?
+  resultGroupJid String?
+  lockMessages   Boolean   @default(false)
+  adminOnly      Boolean   @default(false)
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+}
+
+// ==================== LEADS ====================
+
+model LaunchLead {
+  id           Int      @id @default(autoincrement())
+  phone        String
+  name         String?
+  isBlocked    Boolean  @default(false)
+  firstClickAt DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+  
+  // Lead Scoring
+  score          Int      @default(0)
+  scoreUpdatedAt DateTime?
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  groups      LaunchLeadGroup[]
+  messages    LeadMessage[]
+  scoreEvents LeadScoreEvent[]
+
+  @@unique([launchId, phone])
+}
+
+model LaunchLeadGroup {
+  id       Int       @id @default(autoincrement())
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+  isActive Boolean   @default(true)
+
+  leadId Int
+  lead   LaunchLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  groupId Int
+  group   LaunchGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, groupId])
+}
+
+model LaunchClick {
+  id          Int      @id @default(autoincrement())
+  ip          String?
+  userAgent   String?
+  referer     String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  converted   Boolean  @default(false)
+  redirectUrl String?
+  createdAt   DateTime @default(now())
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  leadId Int?
+}
+
+// ==================== AÇÕES AGENDADAS ====================
+
+model LaunchAction {
+  id          Int       @id @default(autoincrement())
+  type        String // CHANGE_PHOTO, CHANGE_NAME, CHANGE_DESCRIPTION, LOCK_MESSAGES, UNLOCK_MESSAGES
+  config      String // JSON com configuração específica do tipo
+  scheduledAt DateTime
+  executedAt  DateTime?
+  status      String    @default("SCHEDULED") // SCHEDULED, RUNNING, COMPLETED, FAILED, CANCELLED
+  error       String?
+  applyToAll  Boolean   @default(true)
+  groupIds    String? // JSON array de IDs se não for todos
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+}
+
+// ==================== MENSAGENS ====================
+
+model LaunchMessage {
+  id          Int       @id @default(autoincrement())
+  title       String?
+  type        String    @default("TEXT") // TEXT, IMAGE, VIDEO, DOCUMENT, AUDIO
+  content     String
+  mediaUrl    String?
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  status      String    @default("DRAFT") // DRAFT, SCHEDULED, SENDING, COMPLETED, FAILED
+  applyToAll  Boolean   @default(true)
+  groupIds    String? // JSON array de IDs se não for todos
+  delayMin    Int       @default(800)
+  delayMax    Int       @default(2000)
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  logs LaunchMessageLog[]
+}
+
+model LaunchMessageLog {
+  id        Int      @id @default(autoincrement())
+  groupName String
+  groupJid  String
+  status    String // SENT, FAILED
+  error     String?
+  sentAt    DateTime @default(now())
+
+  messageId Int
+  message   LaunchMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+// ==================== WEBHOOKS DE SAÍDA ====================
+
+model LaunchWebhook {
+  id       Int     @id @default(autoincrement())
+  name     String
+  url      String
+  events   String // JSON array de eventos
+  headers  String? // JSON object de headers
+  isActive Boolean @default(true)
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  logs WebhookOutLog[]
+}
+
+model WebhookOutLog {
+  id         Int      @id @default(autoincrement())
+  event      String
+  payload    String
+  statusCode Int?
+  response   String?
+  success    Boolean
+  createdAt  DateTime @default(now())
+
+  webhookId Int
+  webhook   LaunchWebhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+}
+
+// ==================== IA DE RESPOSTA DE LEADS ====================
+
+model LeadMessage {
+  id        Int      @id @default(autoincrement())
+  content   String
+  mediaType String?  // TEXT, IMAGE, AUDIO, VIDEO, DOCUMENT
+  mediaUrl  String?
+  fromPhone String
+  groupJid  String
+  provider  String   @default("EVOLUTION") // Qual provider recebeu
+  receivedAt DateTime @default(now())
+  
+  // IA
+  aiSuggestion String?
+  aiConfidence Float?
+  aiCategory   String?  // DUVIDA, OBJECAO, INTERESSE, SAUDACAO, OUTRO
+  
+  // Status
+  status     String @default("PENDING") // PENDING, APPROVED, REJECTED, SENT, IGNORED
+  repliedAt  DateTime?
+  repliedBy  Int?
+  reply      String?
+  
+  launchId   Int
+  launch     Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+  
+  leadId     Int?
+  lead       LaunchLead? @relation(fields: [leadId], references: [id])
+}
+
+model LaunchAIConfig {
+  id          Int     @id @default(autoincrement())
+  isEnabled   Boolean @default(true)   // IA habilitada para este lançamento
+  autoReply   Boolean @default(false)  // Modo automático
+  systemPrompt String?                 // Prompt específico do lançamento
+  
+  launchId    Int     @unique
+  launch      Launch  @relation(fields: [launchId], references: [id], onDelete: Cascade)
+}
+
+// ==================== MENSAGENS PRIVADAS ====================
+
+model PrivateMessage {
+  id          Int       @id @default(autoincrement())
+  title       String?
+  type        String    @default("TEXT") // TEXT, IMAGE, VIDEO, DOCUMENT, AUDIO
+  content     String
+  mediaUrl    String?
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  status      String    @default("DRAFT") // DRAFT, SCHEDULED, SENDING, COMPLETED, FAILED
+  delayMin    Int       @default(1500) // ms entre envios
+  delayMax    Int       @default(3000)
+  successCount Int      @default(0)
+  failedCount  Int      @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  launchId Int
+  launch   Launch @relation(fields: [launchId], references: [id], onDelete: Cascade)
+
+  logs PrivateMessageLog[]
+}
+
+model PrivateMessageLog {
+  id        Int      @id @default(autoincrement())
+  phone     String
+  leadName  String?
+  status    String   @default("PENDING") // PENDING, SENT, FAILED
+  error     String?
+  sentAt    DateTime @default(now())
+
+  messageId Int
+  message   PrivateMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model LeadScoreEvent {
+  id        Int      @id @default(autoincrement())
+  leadId    Int
+  lead      LaunchLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  
+  event     String   // Tipo do evento (GROUP_JOIN, MESSAGE_SENT, etc)
+  points    Int      // Pontos ganhos/perdidos
+  reason    String?  // Descrição/contexto
+  metadata  String?  // JSON extra data
+  createdAt DateTime @default(now())
+
+  launchId  Int
+  launch    Launch   @relation(fields: [launchId], references: [id], onDelete: Cascade)
+}
+

@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # ──────────────────────────────────────────
+  # Banco de Dados PostgreSQL
+  # ──────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: wpp-grupos-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-adminpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-wpp_grupos}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-wpp_grupos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ──────────────────────────────────────────
+  # Backend (Node.js + Prisma)
+  # ──────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wpp-grupos-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-adminpassword}@postgres:5432/${POSTGRES_DB:-wpp_grupos}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${BACKEND_PORT:-3001}
+    env_file:
+      - .env
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    # Roda migrations automaticamente antes de iniciar
+    command: sh -c "npx prisma migrate deploy && node dist/app.js"
+
+  # ──────────────────────────────────────────
+  # Frontend (Next.js)
+  # ──────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wpp-grupos-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    env_file:
+      - .env
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  postgres_data:
+    driver: local
