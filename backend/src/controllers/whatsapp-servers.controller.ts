@@ -8,7 +8,6 @@ import { prisma } from '../config/database';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { whatsappProvider } from '../services/whatsapp-provider.service';
 import { BaileysProvider } from '../services/providers/baileys.provider';
-import { AppConfig } from '../config/vault';
 
 /**
  * Mascara a API key mantendo apenas os últimos 4 caracteres
