@@ -34,7 +34,7 @@ interface Webhook {
     id: number;
     name: string;
     url: string;
-    events: string[];
+    events: string; // Store as JSON string from backend
     isActive: boolean;
     createdAt: string;
 }

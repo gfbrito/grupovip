@@ -50,6 +50,7 @@ interface Message {
     type: string;
     mediaUrl: string | null;
     scheduledAt: string;
+    createdAt: string;
     delayMin: number;
     delayMax: number;
     status: string;
@@ -61,6 +62,7 @@ interface Group {
     name: string;
     nickname: string | null;
     number: number;
+    remoteJid: string;
 }
 
 export default function LaunchMessagesPage() {

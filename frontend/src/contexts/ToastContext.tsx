@@ -126,6 +126,7 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
                     </button>
                 </div>
             ))}
+            {/* @ts-ignore */}
             <style jsx>{`
         @keyframes slide-in {
           from {

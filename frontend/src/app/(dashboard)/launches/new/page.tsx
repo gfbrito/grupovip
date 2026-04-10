@@ -105,7 +105,7 @@ export default function NewLaunchPage() {
                 </div>
                 {user?.enableAI !== false && (
                     <Button 
-                        variant="default"
+                        variant="primary"
                         onClick={() => setMagicModalOpen(true)}
                         className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 border-0 text-white shadow-md hover:shadow-lg transition-all"
                     >

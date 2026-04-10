@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useParams } from 'next/navigation';
 import {
     Plus,
@@ -49,9 +49,12 @@ interface PrivateMessage {
     type: string;
     mediaUrl: string | null;
     scheduledAt: string;
+    createdAt: string;
     delayMin: number;
     delayMax: number;
     status: string;
+    successCount: number;
+    failedCount: number;
     logs: Array<{
         id: number;
         leadPhone: string;
@@ -66,6 +69,7 @@ interface PrivateMessageStats {
     totalSent: number;
     totalFailed: number;
     pendingCount: number;
+    active: number;
 }
 
 export default function PrivateMessagesPage() {

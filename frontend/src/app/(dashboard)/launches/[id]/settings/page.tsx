@@ -281,7 +281,7 @@ export default function LaunchSettingsPage() {
                 onClose={() => setDeleteModalOpen(false)}
                 onConfirm={handleDelete}
                 title="Excluir Lançamento"
-                message={`Tem certeza que deseja excluir o lançamento "${launch.name}"? Esta ação é irreversível.`}
+                message={`Tem certeza que deseja excluir o lançamento "${launch?.name}"? Esta ação é irreversível.`}
                 confirmText="Sim, excluir tudo"
                 isDestructive
                 isLoading={isDeleting}

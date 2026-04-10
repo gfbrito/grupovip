@@ -34,6 +34,7 @@ interface Launch {
     slug: string;
     logoUrl: string | null;
     status: string;
+    memberLimit: number;
 }
 
 interface Group {
@@ -498,16 +499,16 @@ export default function LaunchGroupsPage() {
                                                     <div className="flex items-center gap-2">
                                                         <input
                                                             readOnly
-                                                            value={group.inviteLink}
+                                                            value={group.inviteLink || ''}
                                                             className="bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs w-32 truncate"
                                                         />
                                                         <button
                                                             onClick={async () => {
                                                                 try {
-                                                                    await navigator.clipboard.writeText(group.inviteLink);
+                                                                    await navigator.clipboard.writeText(group.inviteLink || '');
                                                                 } catch (err) {
                                                                     const textArea = document.createElement('textarea');
-                                                                    textArea.value = group.inviteLink;
+                                                                    textArea.value = group.inviteLink || '';
                                                                     document.body.appendChild(textArea);
                                                                     textArea.select();
                                                                     document.execCommand('copy');

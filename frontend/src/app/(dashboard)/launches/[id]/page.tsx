@@ -28,9 +28,18 @@ interface Launch {
 
 interface LaunchStats {
     totalLeads: number;
+    activeLeads: number;
     totalGroups: number;
+    fullGroups: number;
     totalConversions: number;
     conversionRate: number;
+    todayClicks: number;
+    totalClicks: number;
+    todayEntries: number;
+    capacity: number;
+    totalMembers: number;
+    queuePending: number;
+    entriesLast7Days: number;
     leadsToday?: number;
     activeGroups?: number;
 }
@@ -76,11 +85,11 @@ export default function LaunchDashboardPage() {
         );
     }
 
-    if (!launch) {
+    if (!launch || !stats) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                 <AlertCircle className="w-10 h-10 mb-4 text-slate-400" />
-                <p>Lançamento não encontrado.</p>
+                <p>Lançamento não encontrado ou dados indisponíveis.</p>
             </div>
         );
     }

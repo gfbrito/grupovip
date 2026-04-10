@@ -171,8 +171,8 @@ export default function LaunchesPage() {
 
                                 <Card.Body className="pt-0">
                                     <div className="mt-4 flex items-center justify-between text-xs text-slate-500 border-t pt-4">
-                                        <span>{launch.stats?.totalGroups || 0} Grupos</span>
-                                        <span>{launch.stats?.totalLeads || 0} Total Leads</span>
+                                        <span>{launch._count?.groups || 0} Grupos</span>
+                                        <span>{launch._count?.leads || 0} Total Leads</span>
                                     </div>
                                 </Card.Body>
                             </Card>

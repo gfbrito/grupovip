@@ -52,6 +52,7 @@ interface Lead {
     status: string;
     classification: string;
     score: number;
+    isBlocked: boolean;
     groups: LeadGroup[];
 }
 
