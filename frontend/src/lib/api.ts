@@ -18,7 +18,12 @@ api.interceptors.response.use(
             if (typeof window !== 'undefined') {
                 const path = window.location.pathname;
                 const isAuthPage = path.includes('/login') || path.includes('/register');
-                if (!isAuthPage) {
+                
+                // Se o erro for no /auth/me, não redirecionamos aqui para evitar loops.
+                // O hook useAuth já vai tratar o estado de deslogado.
+                const isMeRequest = error.config?.url?.includes('/auth/me');
+
+                if (!isAuthPage && !isMeRequest) {
                     window.location.href = '/login';
                 }
             }
