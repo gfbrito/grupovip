@@ -152,10 +152,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         {navigation.map((item) => {
                             const isActive = pathname === item.href;
                             return (
-                                <Link
+                                <a
                                     key={item.name}
                                     href={item.href}
-                                    onClick={() => setSidebarOpen(false)}
+                                    onClick={() => {
+                                        console.log('🖱️ Clique em:', item.name);
+                                        setSidebarOpen(false);
+                                    }}
                                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
                                         ? 'bg-blue-50 text-blue-600'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -163,7 +166,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 >
                                     <item.icon className="w-5 h-5" />
                                     {item.name}
-                                </Link>
+                                </a>
                             );
                         })}
 
@@ -178,7 +181,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 {adminNavigation.map((item) => {
                                     const isActive = pathname === item.href;
                                     return (
-                                        <Link
+                                        <a
                                             key={item.name}
                                             href={item.href}
                                             onClick={() => setSidebarOpen(false)}
@@ -189,7 +192,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                         >
                                             <item.icon className="w-5 h-5 text-amber-500" />
                                             {item.name}
-                                        </Link>
+                                        </a>
                                     );
                                 })}
                             </>
