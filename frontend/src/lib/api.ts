@@ -8,6 +8,11 @@ const api = axios.create({
     },
 });
 
+// Ajuda a depurar qual URL está sendo usada em produção
+if (typeof window !== 'undefined') {
+    console.log('🔌 API Base URL:', api.defaults.baseURL);
+}
+
 // Interceptor para adicionar o token em todas as requisições
 api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
@@ -23,6 +28,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // Log detalhado para depuração
+        console.error('❌ Erro na API:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            message: error.message
+        });
+
         // Se for erro de autenticação, redirecionar para login
         if (error.response?.status === 401) {
             if (typeof window !== 'undefined') {
