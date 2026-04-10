@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import routes from './routes';
-import { ensureAppConfig } from './config/database';
+import { ensureAppConfig, ensurePlans } from './config/database';
 import { startQueueWorker } from './services/queue.worker';
 import { startGroupCreationWorker } from './services/group-creation.worker';
 import { startActionSchedulerWorker } from './services/action-scheduler.worker';
@@ -50,9 +50,10 @@ app.get('/health', (req, res) => {
 // Inicialização
 async function bootstrap() {
     try {
-        // Garantir que AppConfig singleton existe
+        // Garantir que AppConfig singleton e Planos iniciais existem
         await ensureAppConfig();
-        console.log('✓ Banco de dados conectado');
+        await ensurePlans();
+        console.log('✓ Banco de dados conectado e planos sincronizados');
 
         // Iniciar workers
         startQueueWorker();
