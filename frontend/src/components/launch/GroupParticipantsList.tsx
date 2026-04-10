@@ -16,10 +16,6 @@ export default function GroupParticipantsList({ launchId, groupId, lastSyncTime,
     const [page, setPage] = useState(1);
     const [total, setTotal] = useState(0);
 
-    useEffect(() => {
-        fetchLeads();
-    }, [page, lastSyncTime, expandedTimestamp, fetchLeads]);
-
     const fetchLeads = useCallback(async () => {
         try {
             setLoading(true);
@@ -33,6 +29,10 @@ export default function GroupParticipantsList({ launchId, groupId, lastSyncTime,
             setLoading(false);
         }
     }, [launchId, groupId, page]);
+
+    useEffect(() => {
+        fetchLeads();
+    }, [page, lastSyncTime, expandedTimestamp, fetchLeads]);
 
     if (loading && leads.length === 0) {
         return <div className="p-4 text-center text-sm text-slate-500">Carregando participantes...</div>;

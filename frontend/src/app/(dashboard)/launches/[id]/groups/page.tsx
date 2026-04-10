@@ -93,16 +93,6 @@ export default function LaunchGroupsPage() {
     const [lastSyncTime, setLastSyncTime] = useState<number>(Date.now());
     const [copiedGroupId, setCopiedGroupId] = useState<number | null>(null);
 
-    useEffect(() => {
-        if (id) {
-            fetchData();
-            // Polling para fila se houver itens pendentes
-            const interval = setInterval(() => {
-                fetchQueue();
-            }, 5000);
-            return () => clearInterval(interval);
-        }
-    }, [id, fetchData, fetchQueue]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -141,6 +131,7 @@ export default function LaunchGroupsPage() {
             console.error('Erro ao atualizar fila:', error);
         }
     }, [id, queue.length]);
+
 
     const handleCreateGroups = async () => {
         if (createAmount < 1) return;
@@ -212,12 +203,6 @@ export default function LaunchGroupsPage() {
     const [isLinkingSubmitting, setIsLinkingSubmitting] = useState(false);
 
     // Carregar grupos disponíveis quando abrir modal
-    useEffect(() => {
-        if (isLinking) {
-            fetchAvailableGroups();
-            setSelectedGroupIds([]);
-        }
-    }, [isLinking, fetchAvailableGroups]);
 
     const fetchAvailableGroups = useCallback(async () => {
         try {
@@ -355,6 +340,24 @@ export default function LaunchGroupsPage() {
             });
         }
     };
+
+    useEffect(() => {
+        if (id) {
+            fetchData();
+            // Polling para fila se houver itens pendentes
+            const interval = setInterval(() => {
+                fetchQueue();
+            }, 5000);
+            return () => clearInterval(interval);
+        }
+    }, [id, fetchData, fetchQueue]);
+
+    useEffect(() => {
+        if (isLinking) {
+            fetchAvailableGroups();
+            setSelectedGroupIds([]);
+        }
+    }, [isLinking, fetchAvailableGroups]);
 
     if (loading && !launch) {
         return (

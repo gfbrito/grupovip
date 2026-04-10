@@ -32,63 +32,7 @@ export default function LaunchRedirectPage() {
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<LaunchRedirectData | null>(null);
 
-    useEffect(() => {
-        if (slug) {
-            handleRedirect();
-        }
-    }, [slug, handleRedirect]);
-
-    const handleRedirect = useCallback(async () => {
-        try {
-            // 1. Buscar dados de redirecionamento
-            // Usamos fetch direto pois pode ser um endpoint público sem auth, 
-            // mas no backend definimos como rota de API. 
-            // Se for rota pública, não deve ir via `api` interceptor que exige auth.
-            // O backend definiu `/l/:slug` na raiz das rotas ou dentro de `/api`?
-            // No routes/index.ts, definimos `router.get('/l/:slug', ...)` dentro de `/api`?
-            // Sim, `router.use('/api', routes)`. Então é `/api/l/:slug`.
-            // Mas para o usuário final seria bom `/l/:slug` na raiz do site frontend.
-            // E o frontend chama o backend.
-
-            // Assumindo que o usuário acessa `frontend.com/l/slug` e essa página faz fetch no backend.
-            // O backend rota é `/api/l/:slug`. 
-            // A rota backend NÃO deve exigir auth.
-            // Verifiquei o backend: `router.get('/l/:slug', ...)` está APÓS os middlewares? 
-            // Está no `index.ts`, e NÃO tem `authMiddleware`. Perfeito.
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/l/${slug}`);
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || 'Lançamento não encontrado');
-            }
-
-            setData(result);
-
-            if (result.status === 'ok' && result.redirectUrl) {
-                // 2. Disparar pixels/tracking
-                triggerTracking(result.tracking);
-
-                // 3. Redirecionar
-                // Pequeno delay para garantir que pixels disparem e para UX
-                setTimeout(() => {
-                    window.location.href = result.redirectUrl;
-                }, 800);
-            } else if (result.status === 'full') {
-                setLoading(false);
-            } else {
-                setError('Não foi possível redirecionar.');
-                setLoading(false);
-            }
-
-        } catch (err: any) {
-            console.error('Erro no redirecionamento:', err);
-            setError(err.message || 'Erro ao processar redirecionamento');
-            setLoading(false);
-        }
-    }, [slug]);
-
-    const triggerTracking = (tracking: any) => {
+    const triggerTracking = useCallback((tracking: any) => {
         if (!tracking) return;
 
         // Meta Pixel
@@ -110,12 +54,50 @@ export default function LaunchRedirectPage() {
         // GTM
         if (tracking.gtmEnabled && tracking.gtmId) {
             // Implementação GTM simplificada ou via lib
-            // Se o projeto já tiver GTM configurado no layout, talvez apenas push no dataLayer
             if (typeof window !== 'undefined' && (window as any).dataLayer) {
                 (window as any).dataLayer.push({ event: 'launch_redirect', slug });
             }
         }
-    };
+    }, [slug]);
+
+    const handleRedirect = useCallback(async () => {
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/l/${slug}`);
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Lançamento não encontrado');
+            }
+
+            setData(result);
+
+            if (result.status === 'ok' && result.redirectUrl) {
+                // 2. Disparar pixels/tracking
+                triggerTracking(result.tracking);
+
+                // 3. Redirecionar
+                setTimeout(() => {
+                    window.location.href = result.redirectUrl;
+                }, 800);
+            } else if (result.status === 'full') {
+                setLoading(false);
+            } else {
+                setError('Não foi possível redirecionar.');
+                setLoading(false);
+            }
+
+        } catch (err: any) {
+            console.error('Erro no redirecionamento:', err);
+            setError(err.message || 'Erro ao processar redirecionamento');
+            setLoading(false);
+        }
+    }, [slug, triggerTracking]);
+
+    useEffect(() => {
+        if (slug) {
+            handleRedirect();
+        }
+    }, [slug, handleRedirect]);
 
     if (loading) {
         return (

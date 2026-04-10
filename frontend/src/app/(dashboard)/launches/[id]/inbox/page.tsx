@@ -85,13 +85,6 @@ export default function LaunchInboxPage() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editedReply, setEditedReply] = useState('');
 
-    useEffect(() => {
-        if (id) {
-            fetchLaunch();
-            fetchMessages();
-            fetchAIConfig();
-        }
-    }, [id, filter, fetchLaunch, fetchMessages, fetchAIConfig]);
 
     const fetchLaunch = useCallback(async () => {
         try {
@@ -125,6 +118,14 @@ export default function LaunchInboxPage() {
             console.error(error);
         }
     }, [id]);
+
+    useEffect(() => {
+        if (id) {
+            fetchLaunch();
+            fetchMessages();
+            fetchAIConfig();
+        }
+    }, [id, filter, fetchLaunch, fetchMessages, fetchAIConfig]);
 
     const handleApprove = async (messageId: number, reply?: string) => {
         try {
