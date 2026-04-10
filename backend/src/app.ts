@@ -22,7 +22,15 @@ const allowedOrigins = [
 ].filter(Boolean) as string[];
 
 app.use(cors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: (origin, callback) => {
+        // Permite requisições sem origin (como ferramentas de teste) ou origins permitidos
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked for origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(express.json());
