@@ -21,7 +21,8 @@ app.set('trust proxy', 1);
 const allowedOrigins = [
     process.env.FRONTEND_URL,
     'http://localhost:3000',
-    'https://grupos-frontend.gfgxr7.easypanel.host'
+    'https://grupos-frontend.gfgxr7.easypanel.host',
+    'https://grupovip.gfbdigital.com.br'
 ].filter(Boolean) as string[];
 
 app.use(cors({
