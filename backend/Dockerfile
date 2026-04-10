@@ -30,5 +30,8 @@ COPY --from=builder /app/prisma ./prisma
 # Expor porta
 EXPOSE 3001
 
+# Cria pasta de uploads para armazenamento local temporário
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+
 # Scripts para rodar migrations e iniciar
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
