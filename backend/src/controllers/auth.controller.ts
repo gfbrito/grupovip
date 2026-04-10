@@ -77,8 +77,11 @@ export async function register(req: AuthenticatedRequest, res: Response): Promis
             },
         });
     } catch (error) {
-        console.error('Erro ao registrar usuário:', error);
-        res.status(500).json({ error: 'Erro interno ao criar usuário' });
+        console.error('❌ Erro detalhado ao registrar usuário:', error);
+        res.status(500).json({ 
+            error: 'Erro interno ao criar usuário',
+            details: process.env.NODE_ENV === 'development' ? error : undefined 
+        });
     }
 }
 

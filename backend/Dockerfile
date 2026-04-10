@@ -39,5 +39,5 @@ EXPOSE 3001
 # Cria pasta de uploads para armazenamento local temporário
 RUN mkdir -p /app/uploads && chmod 777 /app/uploads
 
-# Scripts para rodar migrations e iniciar
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+# Scripts para rodar migrations, popular banco e iniciar
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm start"]
