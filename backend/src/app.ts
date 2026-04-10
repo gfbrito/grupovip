@@ -15,8 +15,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares globais
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'https://grupos-frontend.gfgxr7.easypanel.host'
+].filter(Boolean) as string[];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
     credentials: true,
 }));
 app.use(express.json());
@@ -61,7 +67,7 @@ async function bootstrap() {
         console.log('✓ Scheduler de créditos de IA iniciado (Cron)');
 
         // Iniciar servidor
-        app.listen(PORT, () => {
+        app.listen(Number(PORT), '0.0.0.0', () => {
             console.log(`\n🚀 Backend rodando em http://localhost:${PORT}`);
             console.log(`   API: http://localhost:${PORT}/api`);
             console.log(`   Health: http://localhost:${PORT}/health\n`);
