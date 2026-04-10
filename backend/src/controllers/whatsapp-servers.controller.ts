@@ -215,6 +215,7 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
  * Atualiza servidor existente
  */
 export async function updateServer(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
         const { id } = req.params;
         const { name, url, apiKey, instanceName, priority } = req.body;
         const userId = (req.user as any).id;
