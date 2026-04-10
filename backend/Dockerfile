@@ -6,6 +6,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
+# O Alpine precisa do Git caso tenha algum pacote do Github no package.json
+RUN apk add --no-cache git
 RUN npm install
 
 # Copiar código fonte
