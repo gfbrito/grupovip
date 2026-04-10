@@ -52,13 +52,14 @@ interface Group {
 }
 
 interface QueueItem {
-    id: string;
+    id: number;
     launchId: number;
-    amount: number;
-    status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
-    progress: number;
-    message: string;
+    name: string;
+    number: number;
+    status: 'PENDING' | 'CREATING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    scheduledAt: string;
     createdAt: string;
+    error?: string;
 }
 
 export default function LaunchGroupsPage() {
