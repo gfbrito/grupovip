@@ -48,20 +48,34 @@ export function useAuth() {
 
     const login = async (email: string, password: string) => {
         const response = await api.post('/auth/login', { email, password });
-        setUser(response.data.user);
+        const { token, user } = response.data;
+        if (token) {
+            localStorage.setItem('token', token);
+        }
+        setUser(user);
         return response.data;
     };
-
+ 
     const register = async (email: string, password: string, name: string) => {
         const response = await api.post('/auth/register', { email, password, name });
-        setUser(response.data.user);
+        const { token, user } = response.data;
+        if (token) {
+            localStorage.setItem('token', token);
+        }
+        setUser(user);
         return response.data;
     };
-
+ 
     const logout = async () => {
-        await api.post('/auth/logout');
-        setUser(null);
-        router.push('/login');
+        try {
+            await api.post('/auth/logout');
+        } catch {
+            // Ignora erro no logout
+        } finally {
+            localStorage.removeItem('token');
+            setUser(null);
+            router.push('/login');
+        }
     };
 
     return {

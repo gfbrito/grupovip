@@ -15,7 +15,15 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
-    const token = req.cookies?.token;
+    let token = req.cookies?.token;
+
+    // Se não houver cookie, tenta buscar no header Authorization
+    if (!token && req.headers.authorization) {
+        const authHeader = req.headers.authorization;
+        if (authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7);
+        }
+    }
 
     if (!token) {
         res.status(401).json({ error: 'Não autorizado. Faça login para continuar.' });

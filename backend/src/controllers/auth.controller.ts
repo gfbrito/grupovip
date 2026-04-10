@@ -76,6 +76,7 @@ export async function register(req: AuthenticatedRequest, res: Response): Promis
 
         res.status(201).json({
             message: 'Usuário criado com sucesso',
+            token, // Retorna o token para o frontend salvar
             user: {
                 id: user.id,
                 email: user.email,
@@ -138,6 +139,7 @@ export async function login(req: AuthenticatedRequest, res: Response): Promise<v
 
         res.json({
             message: 'Login realizado com sucesso',
+            token, // Retorna o token para o frontend salvar
             user: {
                 id: user.id,
                 email: user.email,
