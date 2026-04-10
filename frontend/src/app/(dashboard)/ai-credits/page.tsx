@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAICredits } from '../../hooks/useAICredits';
+import { useAICredits } from '@/hooks/useAICredits';
 import { Zap, Coins, History, AlertCircle, CheckCircle2, X } from 'lucide-react';
-import { useToast } from '../../contexts/ToastContext';
+import { useToast } from '@/contexts/ToastContext';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
-import api from '../../lib/api';
+import api from '@/lib/api';
 import { useState } from 'react';
 
 export default function AICreditsPage() {
