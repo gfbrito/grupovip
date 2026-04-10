@@ -152,7 +152,7 @@ export default function DashboardAnalyticsPage() {
                             <h2 className="font-semibold text-slate-900">Fluxo de Participantes (Últimos 14 dias)</h2>
                             <p className="text-sm text-slate-500">Entradas vs Saídas nos seus grupos</p>
                         </Card.Header>
-                        <Card.Body>
+                        <Card.Body className="min-h-[350px]">
                             <div className="h-[300px] w-full mt-4">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={stats.chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>

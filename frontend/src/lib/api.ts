@@ -30,10 +30,11 @@ api.interceptors.response.use(
                 const isAuthPage = path.includes('/login') || path.includes('/register');
                 
                 // Se o erro for no /auth/me, não redirecionamos aqui para evitar loops.
-                // Mas removemos o token do localStorage
+                // Mas removemos o token do localStorage se for um erro de token inválido/expirado
                 const isMeRequest = error.config?.url?.includes('/auth/me');
 
-                if (isMeRequest || error.response?.status === 401) {
+                if (error.response?.data?.error?.toLowerCase().includes('inválido') || 
+                    error.response?.data?.error?.toLowerCase().includes('expirado')) {
                     localStorage.removeItem('token');
                 }
 
