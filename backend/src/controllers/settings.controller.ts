@@ -128,6 +128,8 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
         const cleanUrl = evolutionUrl.replace(/\/+$/, '');
 
         // Testar conexão: busca estado da instância
+        console.log(`[Evolution Test] Chamando: ${cleanUrl}/instance/connectionState/${instanceName}`);
+        
         const response = await axios.get(
             `${cleanUrl}/instance/connectionState/${instanceName}`,
             {
@@ -160,27 +162,29 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
             });
         }
     } catch (error) {
-        console.error('Erro ao testar conexão:', error);
+        console.error('Erro ao testar conexão:', error.message);
 
         if (axios.isAxiosError(error)) {
+            console.log('[Evolution Test] Detalhes do erro:', error.response?.data || error.message);
+
             if (error.code === 'ECONNREFUSED') {
                 res.status(400).json({
                     success: false,
-                    message: 'Não foi possível conectar. Verifique se a URL está correta.',
+                    message: 'Não foi possível conectar. Verifique se a URL está correta (ECONNREFUSED).',
                 });
                 return;
             }
             if (error.response?.status === 401) {
                 res.status(400).json({
                     success: false,
-                    message: 'API Key inválida. Verifique suas credenciais.',
+                    message: 'API Key inválida (401). Verifique suas credenciais.',
                 });
                 return;
             }
             if (error.response?.status === 404) {
                 res.status(400).json({
                     success: false,
-                    message: 'Instância não encontrada. Verifique o nome da instância.',
+                    message: 'Instância não encontrada (404). Verifique o nome da instância.',
                 });
                 return;
             }
@@ -195,7 +199,7 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
 
         res.status(400).json({
             success: false,
-            message: 'Erro ao testar conexão. Verifique as configurações.',
+            message: `Erro: ${error.message || 'Erro desconhecido na conexão'}`,
         });
     }
 }
