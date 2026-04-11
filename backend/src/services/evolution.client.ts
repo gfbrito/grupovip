@@ -392,10 +392,11 @@ class EvolutionClient {
             
             const response = await client.post('/instance/create', {
                 instanceName,
+                name: instanceName, // Adicionado para compatibilidade com versões que usam 'name'
                 token: '', 
                 number: '',
                 qrcode: true,
-                integration: 'WHATSAPP-BAILEYS', // Obrigatório em algumas versões v2
+                integration: 'WHATSAPP-BAILEYS',
             });
 
             console.log(`[Evolution] Instância criada remotamente com sucesso`);
