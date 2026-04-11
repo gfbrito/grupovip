@@ -620,10 +620,16 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
         // Se for Evolution, buscar o QR atualizado da API
         if (server.type === 'EVOLUTION') {
             try {
-                console.log(`[WhatsApp] Buscando QR para instância: ${server.instanceName}`);
+                console.log(`[WhatsApp] Buscando QR para instância: ${server.instanceName} em ${server.url}`);
                 
+                // Criamos um cliente específico para este servidor usando sua URL e Chave próprias
+                const EvolutionClientClass = require('../services/evolution.client').EvolutionClient;
+                const customClient = new EvolutionClientClass(server.url, server.apiKey);
+
                 // Tentamos os dois endpoints principais da Evolution
-                let response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
+                let response = await (customClient as any).createClient().then(({ client }: any) => 
+                    client.get(`/instance/connect/${server.instanceName}`)
+                );
                 
                 // Função auxiliar para extrair o base64 de várias profundidades
                 const extractQR = (data: any) => {
@@ -635,7 +641,9 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
                 // Se não achou no /connect, tenta no /qr
                 if (!qrCode) {
                    console.log(`[WhatsApp] QR não encontrado no /connect, tentando /qr...`);
-                   response = await (provider as any).client.get(`/instance/qr/${server.instanceName}`);
+                   response = await (customClient as any).createClient().then(({ client }: any) => 
+                       client.get(`/instance/qr/${server.instanceName}`)
+                   );
                    qrCode = extractQR(response.data);
                 }
 

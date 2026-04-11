@@ -28,32 +28,27 @@ export class ApiNotConfiguredError extends Error {
 class EvolutionClient {
     private config: AppConfig | null = null;
     private configLoadedAt: number = 0;
-    private readonly CACHE_TTL = 30000; // 30 segundos
+    private overrideUrl?: string;
+    private overrideKey?: string;
 
-    /**
-     * Recarrega config do banco com cache de 30s
-     */
+    constructor(customUrl?: string, customKey?: string) {
+        this.overrideUrl = customUrl;
+        this.overrideKey = customKey;
+    }
+
     private async getConfig(): Promise<AppConfig> {
-        const now = Date.now();
-
-        if (this.config && now - this.configLoadedAt < this.CACHE_TTL) {
-            return this.config;
-        }
-
+        if (this.config) return this.config;
+        
         this.config = await prisma.appConfig.findUnique({ where: { id: 1 } });
 
         if (!this.config) {
             this.config = await prisma.appConfig.findFirst();
         }
 
-        // Se não tiver a flag mas tiver os dados, consideramos configurado (fail-safe)
-        const actuallyConfigured = this.config?.isConfigured || (!!this.config?.evolutionUrl && !!this.config?.evolutionKey);
-
-        if (!this.config || !actuallyConfigured) {
+        if (!this.config) {
             throw new ApiNotConfiguredError();
         }
 
-        this.configLoadedAt = now;
         return this.config;
     }
 
@@ -62,12 +57,15 @@ class EvolutionClient {
      */
     private async createClient(): Promise<{ client: AxiosInstance; config: AppConfig }> {
         const config = await this.getConfig();
+        
+        const finalUrl = this.overrideUrl || config.evolutionUrl;
+        const finalKey = this.overrideKey || config.evolutionKey;
 
-        if (!config.evolutionUrl || !config.evolutionKey) {
+        if (!finalUrl || !finalKey) {
             throw new ApiNotConfiguredError();
         }
 
-        let url = (config.evolutionUrl || '').trim().replace(/\/+$/, '');
+        let url = finalUrl.trim().replace(/\/+$/, '');
         
         // Fail-safe: se o usuário colou a URL terminando em /instance, removemos para evitar duplicidade
         if (url.endsWith('/instance')) {
@@ -77,7 +75,7 @@ class EvolutionClient {
         const client = axios.create({
             baseURL: url,
             headers: {
-                apikey: config.evolutionKey,
+                apikey: finalKey,
                 'Content-Type': 'application/json',
             },
             timeout: 30000,
