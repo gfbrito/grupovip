@@ -11,12 +11,18 @@ export async function configGuardMiddleware(
     next: NextFunction
 ): Promise<void> {
     try {
-        const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+        let config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+        if (!config) {
+            config = await prisma.appConfig.findFirst();
+        }
 
-        if (!config || !config.isConfigured) {
+        // Critério resiliente: se tem URL e Key, permitimos o uso
+        const isConfigured = !!config?.evolutionUrl && !!config?.evolutionKey;
+
+        if (!isConfigured) {
             res.status(503).json({
                 error: 'API não configurada',
-                message: 'Configure a Evolution API em Configurações antes de usar este recurso.',
+                message: 'Aguarde a configuração do sistema pelo administrador.',
                 code: 'API_NOT_CONFIGURED',
             });
             return;

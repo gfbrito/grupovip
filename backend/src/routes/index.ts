@@ -227,7 +227,7 @@ router.put('/launches/:id/ai-config', authMiddleware, leadMessagesController.upd
 // ========================
 // Config Global de IA (admin only)
 // ========================
-router.get('/ai-config', authMiddleware, requireMaster(), leadMessagesController.getAIConfig);
+router.get('/ai-config', authMiddleware, leadMessagesController.getAIConfig);
 router.put('/ai-config', authMiddleware, requireMaster(), leadMessagesController.updateAIConfig);
 
 // ========================
