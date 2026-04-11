@@ -100,14 +100,28 @@ export async function updateSettings(req: AuthenticatedRequest, res: Response): 
  */
 export async function testConnection(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-        const { evolutionUrl, evolutionKey, instanceName } = req.body;
+        let { evolutionUrl, evolutionKey, instanceName } = req.body;
 
-        if (!evolutionUrl || !evolutionKey || !instanceName) {
+        if (!evolutionUrl || !instanceName) {
             res.status(400).json({
                 success: false,
-                message: 'Preencha todos os campos para testar a conexão',
+                message: 'URL e Instância são obrigatórios para o teste',
             });
             return;
+        }
+
+        // Se a key vier mascarada, busca a real no banco
+        if (evolutionKey === '********' || !evolutionKey) {
+            const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+            if (config?.evolutionKey) {
+                evolutionKey = config.evolutionKey;
+            } else if (!evolutionKey) {
+                res.status(400).json({
+                    success: false,
+                    message: 'API Key não informada e não encontrada no sistema',
+                });
+                return;
+            }
         }
 
         // Remover barra final
