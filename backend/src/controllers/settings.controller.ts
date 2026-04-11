@@ -81,6 +81,10 @@ export async function updateSettings(req: AuthenticatedRequest, res: Response): 
             },
         });
 
+        // Invalida o cache do cliente para carregar a nova config imediatamente
+        const { evolutionClient } = require('../services/evolution.client');
+        evolutionClient.invalidateCache();
+
         res.json({
             message: 'Configurações salvas com sucesso',
             evolutionUrl: config.evolutionUrl,
