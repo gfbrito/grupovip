@@ -312,11 +312,20 @@ export async function updateMasterConfig(req: AuthenticatedRequest, res: Respons
             appUpdateData.evolutionKey = data.evolutionKey;
         }
 
+        // Validar se a infraestrutura WhatsApp está preenchida para marcar como configurada
+        if (data.evolutionUrl && data.instanceName) {
+            appUpdateData.isConfigured = true;
+        }
+
         await prisma.appConfig.upsert({
             where: { id: 1 },
             update: appUpdateData,
             create: { id: 1, ...appUpdateData }
         });
+
+        // Invalida o cache do cliente para carregar a nova infraestrutura imediatamente
+        const { evolutionClient } = require('../services/evolution.client');
+        evolutionClient.invalidateCache();
 
         // 2. Atualizar AIConfig (Detalhes do Provedor)
         const aiUpdateData: any = {
