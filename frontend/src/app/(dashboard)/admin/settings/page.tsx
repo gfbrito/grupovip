@@ -220,7 +220,6 @@ export default function MasterSettingsPage() {
                         </div>
                     </div>
                 )}
-                </div>
 
                 {/* SMTP BOX */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
