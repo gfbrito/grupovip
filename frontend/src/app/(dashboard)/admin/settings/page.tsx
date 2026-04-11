@@ -19,6 +19,13 @@ export default function MasterSettingsPage() {
         smtpUser: '',
         smtpPass: '',
         enableAI: true,
+        evolutionUrl: '',
+        evolutionKey: '',
+        instanceName: '',
+        aiProvider: 'OPENAI',
+        aiModel: '',
+        aiApiKey: '',
+        aiSystemPrompt: '',
     });
 
     const fetchConfig = useCallback(async () => {
@@ -33,7 +40,14 @@ export default function MasterSettingsPage() {
                 smtpPort: data.smtpPort || '',
                 smtpUser: data.smtpUser || '',
                 smtpPass: data.smtpPass || '',
-                enableAI: data.enableAI !== undefined ? data.enableAI : true
+                enableAI: data.enableAI !== undefined ? data.enableAI : true,
+                evolutionUrl: data.evolutionUrl || '',
+                evolutionKey: data.evolutionKey || '',
+                instanceName: data.instanceName || '',
+                aiProvider: data.aiConfig?.provider || 'OPENAI',
+                aiModel: data.aiConfig?.model || '',
+                aiApiKey: data.aiConfig?.apiKey || '',
+                aiSystemPrompt: data.aiConfig?.systemPrompt || '',
             });
         } catch (error) {
             console.error(error);
@@ -100,7 +114,15 @@ export default function MasterSettingsPage() {
                         </label>
                     </div>
 
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            🤖
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-800">Módulo de Inteligência Artificial</h2>
+                            <p className="text-sm text-slate-500">Habilite ou desabilite o processamento de IA em toda a plataforma.</p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* WHATSAPP INFRASTRUCTURE BOX */}
