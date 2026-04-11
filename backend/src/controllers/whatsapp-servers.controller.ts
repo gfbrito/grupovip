@@ -626,25 +626,41 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
                 const EvolutionClientClass = require('../services/evolution.client').EvolutionClient;
                 const customClient = new EvolutionClientClass(server.url, server.apiKey);
 
-                // Tentamos os dois endpoints principais da Evolution
-                let response = await (customClient as any).createClient().then(({ client }: any) => 
-                    client.get(`/instance/connect/${server.instanceName}`)
-                );
-                
                 // Função auxiliar para extrair o base64 de várias profundidades
                 const extractQR = (data: any) => {
                     return data?.base64 || data?.code || data?.qrcode?.base64 || data?.qrcode?.code || data?.data?.base64;
                 };
 
-                let qrCode = extractQR(response.data);
+                // Tentamos os endpoints em ordem de probabilidade
+                const endpoints = [
+                    `/instance/connect/${server.instanceName}`,
+                    `/instance/qr/${server.instanceName}`,
+                    `/instance/qr` // Endpoint exato sugerido pelo usuário
+                ];
+
+                let qrCode: string | null = null;
+
+                for (const endpoint of endpoints) {
+                    try {
+                        console.log(`[WhatsApp] Tentando endpoint QR: ${endpoint}`);
+                        const res = await (customClient as any).createClient().then(({ client }: any) => 
+                            client.get(endpoint)
+                        );
+                        qrCode = extractQR(res.data);
+                        if (qrCode) {
+                            console.log(`[WhatsApp] QR encontrado no endpoint: ${endpoint}`);
+                            break;
+                        }
+                    } catch (e) {
+                        // Continua para o próximo
+                    }
+                }
+
+                console.log(`[WhatsApp] Resultado final da busca QR: ${qrCode ? 'Sucesso' : 'Falha'}`);
                 
-                // Se não achou no /connect, tenta no /qr
-                if (!qrCode) {
-                   console.log(`[WhatsApp] QR não encontrado no /connect, tentando /qr...`);
-                   response = await (customClient as any).createClient().then(({ client }: any) => 
-                       client.get(`/instance/qr/${server.instanceName}`)
-                   );
-                   qrCode = extractQR(response.data);
+                if (qrCode) {
+                    const cleanQr = qrCode.replace(/\s/g, '');
+                    provider.qrCodeBase64 = cleanQr.startsWith('data:image') ? cleanQr : `data:image/png;base64,${cleanQr}`;
                 }
 
                 console.log(`[WhatsApp] QR Code extraído: ${qrCode ? 'Sim (Tamanho: ' + qrCode.length + ')' : 'Não'}`);
