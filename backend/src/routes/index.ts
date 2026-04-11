@@ -369,10 +369,10 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
 
         let apiStatus: 'connected' | 'disconnected' | 'not_configured' = 'not_configured';
 
-        // Heurística de segurança: se tiver URL e Key, tratamos como configurado
-        const actuallyConfigured = config?.isConfigured || (!!config?.evolutionUrl && !!config?.evolutionKey);
+        // Critério único de configuração: URL e Key presentes
+        const isConfigured = !!config?.evolutionUrl && !!config?.evolutionKey;
 
-        if (actuallyConfigured) {
+        if (isConfigured) {
             try {
                 const isConnected = await evolutionClient.isConnected();
                 apiStatus = isConnected ? 'connected' : 'disconnected';
@@ -388,11 +388,12 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
         res.json({
             api: apiStatus,
             worker: isWorkerRunning() ? 'running' : 'stopped',
-            configured: actuallyConfigured || false,
+            configured: isConfigured,
             debug: {
-                id: config?.id,
+                db_id: config?.id,
+                db_isConfigured: config?.isConfigured,
                 hasUrl: !!config?.evolutionUrl,
-                isConfiguredFlag: config?.isConfigured
+                hasKey: !!config?.evolutionKey
             }
         });
     } catch (error: any) {

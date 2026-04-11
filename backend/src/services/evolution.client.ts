@@ -46,7 +46,10 @@ class EvolutionClient {
             this.config = await prisma.appConfig.findFirst();
         }
 
-        if (!this.config || !this.config.isConfigured) {
+        // Se não tiver a flag mas tiver os dados, consideramos configurado (fail-safe)
+        const actuallyConfigured = this.config?.isConfigured || (!!this.config?.evolutionUrl && !!this.config?.evolutionKey);
+
+        if (!this.config || !actuallyConfigured) {
             throw new ApiNotConfiguredError();
         }
 
