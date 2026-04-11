@@ -127,11 +127,11 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
         // Remover barra final
         const cleanUrl = evolutionUrl.replace(/\/+$/, '');
 
-        // Testar conexão: busca status global da API
-        console.log(`[Evolution Test] Chamando: ${cleanUrl}/instance/status`);
+        // Testar conexão: busca todas as instâncias (endpoint verificado como funcional)
+        console.log(`[Evolution Test] Chamando: ${cleanUrl}/instance/all`);
         
         const response = await axios.get(
-            `${cleanUrl}/instance/status`,
+            `${cleanUrl}/instance/all`,
             {
                 headers: {
                     apikey: evolutionKey,
