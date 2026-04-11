@@ -388,11 +388,11 @@ class EvolutionClient {
     async createInstance(instanceName: string): Promise<any> {
         try {
             const { client } = await this.createClient();
-            console.log(`[Evolution] Tentando criar instância: ${instanceName}`);
+            console.log(`[Evolution] Tentando criação remota compulsória: ${instanceName}`);
             
             const response = await client.post('/instance/create', {
                 instanceName,
-                name: instanceName, // Adicionado para compatibilidade com versões que usam 'name'
+                name: instanceName, 
                 token: '', 
                 number: '',
                 qrcode: true,
@@ -402,7 +402,16 @@ class EvolutionClient {
             console.log(`[Evolution] Instância criada remotamente com sucesso`);
             return response.data;
         } catch (error: any) {
-            console.error('[Evolution] Erro detalhado na criação remota:', error.response?.data || error.message);
+            // Captura o erro detalhado para o controller tratar
+            const errorData = error.response?.data || error.message;
+            console.error('[Evolution] Erro detalhado na criação remota:', errorData);
+            
+            // Se for 409 (Conflict), a instância já existe, o que podemos considerar sucesso para o nosso lado
+            if (error.response?.status === 409) {
+                console.log('[Evolution] Instância já existe, seguindo com o vínculo...');
+                return { success: true, message: 'Instance already exists' };
+            }
+
             throw error;
         }
     }

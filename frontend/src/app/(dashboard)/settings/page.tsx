@@ -248,7 +248,11 @@ export default function SettingsPage() {
             setNewServer({ name: '', type: 'EVOLUTION', url: '', apiKey: '', instanceName: '' });
             fetchServers();
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Erro ao criar instância');
+            const errorData = error.response?.data;
+            const errorMessage = errorData?.details 
+                ? `${errorData.error}: ${typeof errorData.details === 'string' ? errorData.details : JSON.stringify(errorData.details)}` 
+                : (errorData?.error || 'Erro ao criar instância');
+            toast.error(errorMessage);
         }
     };
 

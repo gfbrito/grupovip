@@ -198,6 +198,22 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
             }
         }
 
+        // Se for Evolution, já tenta criar a instância remotamente ANTES de salvar no banco
+        if (type === 'EVOLUTION') {
+            try {
+                console.log(`[WhatsApp] Tentando criação remota compulsória antes de salvar: ${instanceName}`);
+                await evolutionClient.createInstance(instanceName);
+                console.log(`[WhatsApp] Instância Evolution validada remotamente: ${instanceName}`);
+            } catch (err: any) {
+                console.error(`[WhatsApp] Erro crítico na Evolution:`, err.response?.data || err.message);
+                res.status(400).json({ 
+                    error: 'Falha na Evolution API: Instância não pôde ser criada remotamente.',
+                    details: err.response?.data || err.message
+                });
+                return;
+            }
+        }
+
         // Encontrar próxima prioridade
         const maxPriority = await prisma.whatsAppServer.aggregate({
             _max: { priority: true },
@@ -217,24 +233,6 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
                 userId,
             },
         });
-
-        // Se for Evolution, já tenta criar a instância remotamente
-        if (type === 'EVOLUTION') {
-            try {
-                console.log(`[WhatsApp] Tentando criação remota compulsória: ${instanceName}`);
-                await evolutionClient.createInstance(instanceName);
-                console.log(`[WhatsApp] Instância Evolution criada remotamente: ${instanceName}`);
-            } catch (err: any) {
-                console.error(`[WhatsApp] Erro crítico na Evolution:`, err.response?.data || err.message);
-                // Opcional: deletar o registro local se quiser ser rigoroso
-                // await prisma.whatsappServer.delete({ where: { id: server.id } });
-                res.status(400).json({ 
-                    error: 'Falha na Evolution API: Instância não pôde ser criada remotamente.',
-                    details: err.response?.data || err.message
-                });
-                return;
-            }
-        }
 
         res.status(201).json({
             message: 'Servidor criado. Teste a conexão para ativá-lo.',
