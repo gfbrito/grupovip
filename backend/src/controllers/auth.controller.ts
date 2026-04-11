@@ -69,11 +69,13 @@ export async function register(req: AuthenticatedRequest, res: Response): Promis
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
         });
 
-        const config = await prisma.appConfig.findUnique({
-            where: { id: 1 },
-            select: { enableAI: true }
+        let config = await prisma.appConfig.findUnique({
+            where: { id: 1 }
         });
 
+        if (!config) {
+            config = await prisma.appConfig.findFirst();
+        }
         res.status(201).json({
             message: 'Usuário criado com sucesso',
             token, // Retorna o token para o frontend salvar
@@ -132,10 +134,14 @@ export async function login(req: AuthenticatedRequest, res: Response): Promise<v
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        const config = await prisma.appConfig.findUnique({
+        let config = await prisma.appConfig.findUnique({
             where: { id: 1 },
             select: { enableAI: true }
         });
+
+        if (!config) {
+            config = await prisma.appConfig.findFirst({ select: { enableAI: true } });
+        }
 
         res.json({
             message: 'Login realizado com sucesso',
@@ -177,10 +183,14 @@ export async function me(req: AuthenticatedRequest, res: Response): Promise<void
             return;
         }
 
-        const config = await prisma.appConfig.findUnique({
+        let config = await prisma.appConfig.findUnique({
             where: { id: 1 },
             select: { enableAI: true }
         });
+
+        if (!config) {
+            config = await prisma.appConfig.findFirst({ select: { enableAI: true } });
+        }
 
         res.json({
             user: {

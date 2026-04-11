@@ -42,6 +42,10 @@ class EvolutionClient {
 
         this.config = await prisma.appConfig.findUnique({ where: { id: 1 } });
 
+        if (!this.config) {
+            this.config = await prisma.appConfig.findFirst();
+        }
+
         if (!this.config || !this.config.isConfigured) {
             throw new ApiNotConfiguredError();
         }

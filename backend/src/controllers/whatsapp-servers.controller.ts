@@ -136,7 +136,10 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
 
         // Se for CLIENTE (não Master), herda configurações globais da Evolution
         if (!isMaster && type === 'EVOLUTION') {
-            const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+            let config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+            if (!config) {
+                config = await prisma.appConfig.findFirst();
+            }
             if (!config || !config.isConfigured) {
                 res.status(503).json({
                     error: 'Sistema em manutenção',

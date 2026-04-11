@@ -354,7 +354,11 @@ router.get('/l/:slug', async (req: Request, res: Response) => {
 // ========================
 router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+        // Tenta buscar o ID 1, se não encontrar, pega o primeiro registro que existir
+        let config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+        if (!config) {
+            config = await prisma.appConfig.findFirst();
+        }
         
         console.log('[Status Debug] Config encontrada:', {
             id: config?.id,
@@ -383,6 +387,11 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
             api: apiStatus,
             worker: isWorkerRunning() ? 'running' : 'stopped',
             configured: actuallyConfigured || false,
+            debug: {
+                id: config?.id,
+                hasUrl: !!config?.evolutionUrl,
+                isConfiguredFlag: config?.isConfigured
+            }
         });
     } catch (error: any) {
         console.error('[Status Debug] Erro fatal na rota /status:', error.message);
