@@ -26,10 +26,12 @@ export async function getSettings(req: AuthenticatedRequest, res: Response): Pro
             });
         }
 
+        const actuallyConfigured = config.isConfigured || (!!config.evolutionUrl && !!config.evolutionKey);
+
         res.json({
             evolutionUrl: config.evolutionUrl,
             instanceName: config.instanceName,
-            isConfigured: config.isConfigured,
+            isConfigured: actuallyConfigured,
             maskedKey: maskApiKey(config.evolutionKey),
             updatedAt: config.updatedAt,
         });
