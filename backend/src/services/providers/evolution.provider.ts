@@ -28,8 +28,13 @@ export class EvolutionProvider implements IWhatsAppProvider {
         this.serverId = config.id;
         this.instanceName = config.instanceName || '';
 
+        let url = (config.url || '').trim().replace(/\/+$/, '');
+        if (url.endsWith('/instance')) {
+            url = url.replace(/\/instance$/, '');
+        }
+
         this.client = axios.create({
-            baseURL: config.url.replace(/\/+$/, ''),
+            baseURL: url,
             headers: {
                 apikey: config.apiKey || '',
                 'Content-Type': 'application/json',

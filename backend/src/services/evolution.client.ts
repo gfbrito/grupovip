@@ -67,8 +67,15 @@ class EvolutionClient {
             throw new ApiNotConfiguredError();
         }
 
+        let url = (config.evolutionUrl || '').trim().replace(/\/+$/, '');
+        
+        // Fail-safe: se o usuário colou a URL terminando em /instance, removemos para evitar duplicidade
+        if (url.endsWith('/instance')) {
+            url = url.replace(/\/instance$/, '');
+        }
+
         const client = axios.create({
-            baseURL: config.evolutionUrl,
+            baseURL: url,
             headers: {
                 apikey: config.evolutionKey,
                 'Content-Type': 'application/json',
