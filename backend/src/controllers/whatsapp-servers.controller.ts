@@ -616,13 +616,16 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
         // Se for Evolution, buscar o QR atualizado da API
         if (server.type === 'EVOLUTION') {
             try {
+                console.log(`[WhatsApp] Buscando QR para instância: ${server.instanceName}`);
                 const response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
-                const qrCode = response.data?.base64 || response.data?.code;
+                console.log(`[WhatsApp] Resposta Evolution Connect:`, JSON.stringify(response.data).substring(0, 100) + '...');
+                
+                const qrCode = response.data?.base64 || response.data?.code || response.data?.qrcode?.base64;
                 if (qrCode) {
                     provider.qrCodeBase64 = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
                 }
             } catch (err: any) {
-                console.error('[WhatsApp] Erro ao buscar QR da Evolution:', err.message);
+                console.error('[WhatsApp] Erro ao buscar QR da Evolution:', err.response?.data || err.message);
             }
         }
 
