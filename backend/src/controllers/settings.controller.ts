@@ -127,11 +127,11 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
         // Remover barra final
         const cleanUrl = evolutionUrl.replace(/\/+$/, '');
 
-        // Testar conexão: busca estado da instância
-        console.log(`[Evolution Test] Chamando: ${cleanUrl}/instance/connectionState/${instanceName}`);
+        // Testar conexão: busca status global da API
+        console.log(`[Evolution Test] Chamando: ${cleanUrl}/instance/status`);
         
         const response = await axios.get(
-            `${cleanUrl}/instance/connectionState/${instanceName}`,
+            `${cleanUrl}/instance/status`,
             {
                 headers: {
                     apikey: evolutionKey,
@@ -140,27 +140,12 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
             }
         );
 
-        const state = response.data?.instance?.state || response.data?.state;
-
-        if (state === 'open') {
-            res.json({
-                success: true,
-                message: 'Conexão estabelecida com sucesso!',
-                state: 'open',
-            });
-        } else if (state === 'close' || state === 'closed') {
-            res.json({
-                success: true,
-                message: 'API conectada, mas instância desconectada. Escaneie o QR Code.',
-                state: 'close',
-            });
-        } else {
-            res.json({
-                success: true,
-                message: `Conexão OK. Estado: ${state || 'desconhecido'}`,
-                state: state || 'unknown',
-            });
-        }
+        // Se chegou aqui com sucesso (status 200), a API e a Key estão corretas
+        res.json({
+            success: true,
+            message: 'API Evolution conectada com sucesso!',
+            state: 'open',
+        });
     } catch (error) {
         console.error('Erro ao testar conexão:', error.message);
 
