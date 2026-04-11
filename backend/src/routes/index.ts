@@ -367,6 +367,8 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
             hasKey: !!config?.evolutionKey
         });
 
+        let apiStatus: 'connected' | 'disconnected' | 'not_configured' = 'not_configured';
+
         // Heurística de segurança: se tiver URL e Key, tratamos como configurado
         const actuallyConfigured = config?.isConfigured || (!!config?.evolutionUrl && !!config?.evolutionKey);
 
