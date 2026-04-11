@@ -376,6 +376,22 @@ class EvolutionClient {
     }
 
     /**
+     * Cria uma nova instância na Evolution API
+     */
+    async createInstance(instanceName: string): Promise<any> {
+        const { client } = await this.createClient();
+        
+        const response = await client.post('/instance/create', {
+            instanceName,
+            token: '', // Gera token aleatório se vazio
+            number: '',
+            qrcode: true,
+        });
+
+        return response.data;
+    }
+
+    /**
      * Verifica se a API está configurada e conectada
      */
     async isConnected(): Promise<boolean> {

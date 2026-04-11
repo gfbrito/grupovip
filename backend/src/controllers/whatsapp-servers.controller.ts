@@ -214,6 +214,19 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
             },
         });
 
+        // Se for Evolution, já tenta criar a instância remotamente
+        if (type === 'EVOLUTION') {
+            try {
+                const { evolutionClient } = await import('../services/evolution.client');
+                await evolutionClient.createInstance(instanceName);
+                console.log(`[WhatsApp] Instância Evolution criada: ${instanceName}`);
+            } catch (err: any) {
+                console.error(`[WhatsApp] Erro ao criar instância na Evolution:`, err.message);
+                // Não barramos a criação no banco local se a API falhar, 
+                // o usuário pode tentar novamente via teste de conexão
+            }
+        }
+
         res.status(201).json({
             message: 'Servidor criado. Teste a conexão para ativá-lo.',
             server: { ...server, apiKey: maskApiKey(server.apiKey) },
@@ -567,9 +580,9 @@ export async function reorderServers(req: AuthenticatedRequest, res: Response): 
 
 /**
  * GET /api/whatsapp-servers/:id/qr
- * Retorna o QRCode em Base64 para pareamento nativo no Baileys
+ * Retorna o QRCode em Base64 para pareamento
  */
-export async function getBaileysQr(req: AuthenticatedRequest, res: Response): Promise<void> {
+export async function getQrCode(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
         const { id } = req.params;
         const userId = (req.user as any).id;
@@ -592,24 +605,32 @@ export async function getBaileysQr(req: AuthenticatedRequest, res: Response): Pr
 
         const provider = await whatsappProvider.getProviderById(parseInt(id));
 
-        // Verificar se realmente é o provider Baileys e extrair a prop especifica
-        if (provider instanceof BaileysProvider) {
-            if (provider.connectionStatus === 'open') {
-                res.json({ success: true, connected: true, message: 'Conta já conectada!' });
-                return;
-            }
-
-            res.json({ 
-                success: true, 
-                connected: false,
-                qrCodeBase64: provider.qrCodeBase64,
-                message: provider.qrCodeBase64 ? 'QRCode Disponível' : 'Gerando QRCode...'
-            });
-        } else {
-            res.status(400).json({ error: 'O servidor não é do tipo Baileys nativo' });
+        if (provider.connectionStatus === 'open') {
+            res.json({ success: true, connected: true, message: 'Conta já conectada!' });
+            return;
         }
+
+        // Se for Evolution, buscar o QR atualizado da API
+        if (server.type === 'EVOLUTION') {
+            try {
+                const response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
+                const qrCode = response.data?.base64 || response.data?.code;
+                if (qrCode) {
+                    (provider as any).qrCodeBase64 = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
+                }
+            } catch (err: any) {
+                console.error('[WhatsApp] Erro ao buscar QR da Evolution:', err.message);
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            connected: false,
+            qrCodeBase64: provider.qrCodeBase64,
+            message: provider.qrCodeBase64 ? 'QRCode Disponível' : 'Gerando QRCode... Tente novamente em alguns segundos.'
+        });
     } catch (error: any) {
-        console.error('Erro ao puxar QR Code do Baileys:', error.message);
-        res.status(500).json({ error: 'Erro interno ao consultar provedor nativo' });
+        console.error('Erro ao puxar QR Code:', error.message);
+        res.status(500).json({ error: 'Erro interno ao consultar provedor' });
     }
 }

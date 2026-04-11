@@ -83,7 +83,7 @@ router.put('/whatsapp-servers/:id', authMiddleware, whatsappServersController.up
 router.delete('/whatsapp-servers/:id', authMiddleware, whatsappServersController.deleteServer);
 router.post('/whatsapp-servers/:id/test', authMiddleware, whatsappServersController.testServer);
 router.post('/whatsapp-servers/:id/activate', authMiddleware, whatsappServersController.toggleServer);
-router.get('/whatsapp-servers/:id/qr', authMiddleware, whatsappServersController.getBaileysQr);
+router.get('/whatsapp-servers/:id/qr', authMiddleware, whatsappServersController.getQrCode);
 
 // ========================
 // WhatsApp Instances Routes (from Evolution API)

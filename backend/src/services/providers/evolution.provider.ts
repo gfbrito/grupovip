@@ -21,6 +21,8 @@ export class EvolutionProvider implements IWhatsAppProvider {
     private client: AxiosInstance;
     private instanceName: string;
 
+    private _qrCode: string | null = null;
+
     constructor(config: ServerConfig) {
         this.providerName = `Evolution:${config.name}`;
         this.serverId = config.id;
@@ -34,6 +36,16 @@ export class EvolutionProvider implements IWhatsAppProvider {
             },
             timeout: 30000,
         });
+    }
+
+    get qrCodeBase64(): string | null {
+        // A Evolution API geralmente retorna o QR no connect ou via fetch
+        // Por enquanto retornamos o cache se houver, o controller vai forçar a busca
+        return this._qrCode;
+    }
+
+    set qrCodeBase64(value: string | null) {
+        this._qrCode = value;
     }
 
     async isConnected(): Promise<boolean> {

@@ -237,7 +237,7 @@ export default function SettingsPage() {
 
         try {
             await api.post('/whatsapp-servers', payload);
-            toast.success('Instância criada! Configure o pareamento.');
+            toast.success('Instância criada com sucesso! Agora clique em "Parear QR" para conectar seu WhatsApp.');
             setShowAddModal(false);
             setNewServer({ name: '', type: 'EVOLUTION', url: '', apiKey: '', instanceName: '' });
             fetchServers();
@@ -551,7 +551,7 @@ export default function SettingsPage() {
                                                 <RefreshCw className="w-4 h-4" />
                                             </Button>
 
-                                            {server.type === 'BAILEYS' && server.status !== 'CONNECTED' && (
+                                            {server.status !== 'CONNECTED' && (server.type === 'BAILEYS' || server.type === 'EVOLUTION') && (
                                                 <Button
                                                     variant="primary"
                                                     size="sm"
