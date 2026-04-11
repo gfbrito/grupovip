@@ -628,7 +628,14 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
 
                 // Função auxiliar para extrair o base64 de várias profundidades
                 const extractQR = (data: any) => {
-                    return data?.base64 || data?.code || data?.qrcode?.base64 || data?.qrcode?.code || data?.data?.base64;
+                    return data?.base64 || 
+                           data?.code || 
+                           data?.qrcode?.base64 || 
+                           data?.qrcode?.code || 
+                           data?.data?.base64 || 
+                           data?.data?.qrcode ||
+                           data?.data?.Qrcode || // Suporte para o formato do evogo.gfbdigital.com.br
+                           data?.instance?.qrcode?.base64;
                 };
 
                 // Tentamos os endpoints em ordem de probabilidade
@@ -646,6 +653,9 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
                         const res = await (customClient as any).createClient().then(({ client }: any) => 
                             client.get(endpoint)
                         );
+                        
+                        console.log(`[WhatsApp] Resposta Bruta de ${endpoint}:`, JSON.stringify(res.data));
+                        
                         qrCode = extractQR(res.data);
                         if (qrCode) {
                             console.log(`[WhatsApp] QR encontrado no endpoint: ${endpoint}`);
