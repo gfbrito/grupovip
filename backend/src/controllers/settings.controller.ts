@@ -33,7 +33,7 @@ export async function getSettings(req: AuthenticatedRequest, res: Response): Pro
             maskedKey: maskApiKey(config.evolutionKey),
             updatedAt: config.updatedAt,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Erro ao buscar configurações:', error);
         res.status(500).json({ error: 'Erro ao buscar configurações' });
     }
@@ -88,7 +88,7 @@ export async function updateSettings(req: AuthenticatedRequest, res: Response): 
             isConfigured: config.isConfigured,
             maskedKey: maskApiKey(config.evolutionKey),
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Erro ao salvar configurações:', error);
         res.status(500).json({ error: 'Erro ao salvar configurações' });
     }
@@ -146,7 +146,7 @@ export async function testConnection(req: AuthenticatedRequest, res: Response): 
             message: 'API Evolution conectada com sucesso!',
             state: 'open',
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Erro ao testar conexão:', error.message);
 
         if (axios.isAxiosError(error)) {
