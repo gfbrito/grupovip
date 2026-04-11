@@ -363,9 +363,10 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
             hasKey: !!config?.evolutionKey
         });
 
-        let apiStatus: 'connected' | 'disconnected' | 'not_configured' = 'not_configured';
+        // Heurística de segurança: se tiver URL e Key, tratamos como configurado
+        const actuallyConfigured = config?.isConfigured || (!!config?.evolutionUrl && !!config?.evolutionKey);
 
-        if (config?.isConfigured) {
+        if (actuallyConfigured) {
             try {
                 const isConnected = await evolutionClient.isConnected();
                 apiStatus = isConnected ? 'connected' : 'disconnected';
@@ -381,7 +382,7 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
         res.json({
             api: apiStatus,
             worker: isWorkerRunning() ? 'running' : 'stopped',
-            configured: config?.isConfigured || false,
+            configured: actuallyConfigured || false,
         });
     } catch (error: any) {
         console.error('[Status Debug] Erro fatal na rota /status:', error.message);
