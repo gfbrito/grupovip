@@ -373,8 +373,11 @@ class EvolutionClient {
      */
     async isConnected(): Promise<boolean> {
         try {
-            const state = await this.getConnectionState();
-            return state.state === 'open';
+            const { client } = await this.createClient();
+            // Usamos /instance/all como teste de saúde global pois é mais compatível
+            // em diferentes versões da Evolution API para verificar infraestrutura
+            const response = await client.get('/instance/all');
+            return response.status === 200;
         } catch {
             return false;
         }

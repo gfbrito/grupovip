@@ -105,7 +105,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }
         };
 
-        if (user) {
+        if (user && user.role === 'MASTER') {
             fetchStatus();
             const interval = setInterval(fetchStatus, 30000);
             return () => clearInterval(interval);
@@ -257,10 +257,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                         <div className="flex items-center gap-6 ml-auto">
                             {user.enableAI !== false && <AICreditsWidget />}
-                            <div className="hidden sm:flex items-center gap-6 border-l border-slate-200 pl-6">
-                                <StatusIndicator status={apiStatus} label="API" />
-                                <StatusIndicator status={workerStatus} label="Worker" />
-                            </div>
+                            {user.role === 'MASTER' && (
+                                <div className="hidden sm:flex items-center gap-6 border-l border-slate-200 pl-6">
+                                    <StatusIndicator status={apiStatus} label="API" />
+                                    <StatusIndicator status={workerStatus} label="Worker" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
