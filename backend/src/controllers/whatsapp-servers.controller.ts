@@ -617,8 +617,15 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
         if (server.type === 'EVOLUTION') {
             try {
                 console.log(`[WhatsApp] Buscando QR para instância: ${server.instanceName}`);
-                const response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
-                console.log(`[WhatsApp] Resposta Evolution Connect:`, JSON.stringify(response.data).substring(0, 100) + '...');
+                // Tentamos primeiro o endpoint sugerido pelo usuário (/qr)
+                let response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
+                
+                // Se não vier no connect, tentamos no /qr
+                if (!response.data?.base64 && !response.data?.code) {
+                   response = await (provider as any).client.get(`/instance/qr/${server.instanceName}`);
+                }
+
+                console.log(`[WhatsApp] Resposta Evolution QR/Connect:`, JSON.stringify(response.data).substring(0, 100) + '...');
                 
                 const qrCode = response.data?.base64 || response.data?.code || response.data?.qrcode?.base64;
                 if (qrCode) {
