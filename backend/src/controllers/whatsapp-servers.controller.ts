@@ -621,19 +621,30 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
         if (server.type === 'EVOLUTION') {
             try {
                 console.log(`[WhatsApp] Buscando QR para instância: ${server.instanceName}`);
-                // Tentamos primeiro o endpoint sugerido pelo usuário (/qr)
+                
+                // Tentamos os dois endpoints principais da Evolution
                 let response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
                 
-                // Se não vier no connect, tentamos no /qr
-                if (!response.data?.base64 && !response.data?.code) {
+                // Função auxiliar para extrair o base64 de várias profundidades
+                const extractQR = (data: any) => {
+                    return data?.base64 || data?.code || data?.qrcode?.base64 || data?.qrcode?.code || data?.data?.base64;
+                };
+
+                let qrCode = extractQR(response.data);
+                
+                // Se não achou no /connect, tenta no /qr
+                if (!qrCode) {
+                   console.log(`[WhatsApp] QR não encontrado no /connect, tentando /qr...`);
                    response = await (provider as any).client.get(`/instance/qr/${server.instanceName}`);
+                   qrCode = extractQR(response.data);
                 }
 
-                console.log(`[WhatsApp] Resposta Evolution QR/Connect:`, JSON.stringify(response.data).substring(0, 100) + '...');
+                console.log(`[WhatsApp] QR Code extraído: ${qrCode ? 'Sim (Tamanho: ' + qrCode.length + ')' : 'Não'}`);
                 
-                const qrCode = response.data?.base64 || response.data?.code || response.data?.qrcode?.base64;
                 if (qrCode) {
-                    provider.qrCodeBase64 = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
+                    // Limpa o base64 (remove espaços ou quebras de linha se existirem)
+                    const cleanQr = qrCode.replace(/\s/g, '');
+                    provider.qrCodeBase64 = cleanQr.startsWith('data:image') ? cleanQr : `data:image/png;base64,${cleanQr}`;
                 }
             } catch (err: any) {
                 console.error('[WhatsApp] Erro ao buscar QR da Evolution:', err.response?.data || err.message);
