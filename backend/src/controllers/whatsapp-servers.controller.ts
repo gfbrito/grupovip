@@ -616,7 +616,7 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
                 const response = await (provider as any).client.get(`/instance/connect/${server.instanceName}`);
                 const qrCode = response.data?.base64 || response.data?.code;
                 if (qrCode) {
-                    (provider as any).qrCodeBase64 = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
+                    provider.qrCodeBase64 = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
                 }
             } catch (err: any) {
                 console.error('[WhatsApp] Erro ao buscar QR da Evolution:', err.message);

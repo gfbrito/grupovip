@@ -48,6 +48,14 @@ export interface IWhatsAppProvider {
     /** ID do servidor no banco */
     readonly serverId: number;
 
+    // ==================== Propriedades de Estado ====================
+
+    /** QR Code atual em base64 (se disponível e não conectado) */
+    qrCodeBase64: string | null;
+
+    /** Status simplificado da conexão */
+    readonly connectionStatus: 'open' | 'close' | 'connecting';
+
     // ==================== Conexão ====================
 
     /**

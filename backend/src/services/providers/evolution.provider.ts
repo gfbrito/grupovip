@@ -48,11 +48,19 @@ export class EvolutionProvider implements IWhatsAppProvider {
         this._qrCode = value;
     }
 
+    private _state: 'open' | 'close' | 'connecting' = 'close';
+
+    get connectionStatus(): 'open' | 'close' | 'connecting' {
+        return this._state;
+    }
+
     async isConnected(): Promise<boolean> {
         try {
             const state = await this.getConnectionState();
+            this._state = state.state;
             return state.state === 'open';
         } catch {
+            this._state = 'close';
             return false;
         }
     }
