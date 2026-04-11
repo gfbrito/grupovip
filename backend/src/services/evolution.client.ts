@@ -379,16 +379,24 @@ class EvolutionClient {
      * Cria uma nova instância na Evolution API
      */
     async createInstance(instanceName: string): Promise<any> {
-        const { client } = await this.createClient();
-        
-        const response = await client.post('/instance/create', {
-            instanceName,
-            token: '', // Gera token aleatório se vazio
-            number: '',
-            qrcode: true,
-        });
+        try {
+            const { client } = await this.createClient();
+            console.log(`[Evolution] Tentando criar instância: ${instanceName}`);
+            
+            const response = await client.post('/instance/create', {
+                instanceName,
+                token: '', 
+                number: '',
+                qrcode: true,
+                integration: 'WHATSAPP-BAILEYS', // Obrigatório em algumas versões v2
+            });
 
-        return response.data;
+            console.log(`[Evolution] Instância criada remotamente com sucesso`);
+            return response.data;
+        } catch (error: any) {
+            console.error('[Evolution] Erro detalhado na criação remota:', error.response?.data || error.message);
+            throw error;
+        }
     }
 
     /**
