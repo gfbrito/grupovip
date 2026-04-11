@@ -7,6 +7,7 @@ import axios from 'axios';
 import { prisma } from '../config/database';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 import { whatsappProvider } from '../services/whatsapp-provider.service';
+import { evolutionClient } from '../services/evolution.client';
 import { BaileysProvider } from '../services/providers/baileys.provider';
 
 /**
@@ -220,13 +221,17 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
         // Se for Evolution, já tenta criar a instância remotamente
         if (type === 'EVOLUTION') {
             try {
-                const { evolutionClient } = await import('../services/evolution.client');
+                console.log(`[WhatsApp] Tentando criação remota compulsória: ${instanceName}`);
                 await evolutionClient.createInstance(instanceName);
-                console.log(`[WhatsApp] Instância Evolution criada: ${instanceName}`);
+                console.log(`[WhatsApp] Instância Evolution criada remotamente: ${instanceName}`);
             } catch (err: any) {
-                console.error(`[WhatsApp] Erro ao criar instância na Evolution:`, err.message);
-                // Não barramos a criação no banco local se a API falhar, 
-                // o usuário pode tentar novamente via teste de conexão
+                console.error(`[WhatsApp] Erro crítico na Evolution:`, err.response?.data || err.message);
+                // Opcional: deletar o registro local se quiser ser rigoroso
+                // await prisma.whatsappServer.delete({ where: { id: server.id } });
+                return res.status(400).json({ 
+                    error: 'Falha na Evolution API: Instância não pôde ser criada remotamente.',
+                    details: err.response?.data || err.message
+                });
             }
         }
 
