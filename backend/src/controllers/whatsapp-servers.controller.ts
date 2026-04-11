@@ -228,10 +228,11 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
                 console.error(`[WhatsApp] Erro crítico na Evolution:`, err.response?.data || err.message);
                 // Opcional: deletar o registro local se quiser ser rigoroso
                 // await prisma.whatsappServer.delete({ where: { id: server.id } });
-                return res.status(400).json({ 
+                res.status(400).json({ 
                     error: 'Falha na Evolution API: Instância não pôde ser criada remotamente.',
                     details: err.response?.data || err.message
                 });
+                return;
             }
         }
 
