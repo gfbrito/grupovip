@@ -355,6 +355,13 @@ router.get('/l/:slug', async (req: Request, res: Response) => {
 router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Response) => {
     try {
         const config = await prisma.appConfig.findUnique({ where: { id: 1 } });
+        
+        console.log('[Status Debug] Config encontrada:', {
+            id: config?.id,
+            isConfigured: config?.isConfigured,
+            hasUrl: !!config?.evolutionUrl,
+            hasKey: !!config?.evolutionKey
+        });
 
         let apiStatus: 'connected' | 'disconnected' | 'not_configured' = 'not_configured';
 
@@ -362,9 +369,13 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
             try {
                 const isConnected = await evolutionClient.isConnected();
                 apiStatus = isConnected ? 'connected' : 'disconnected';
-            } catch {
+                console.log('[Status Debug] Resultado isConnected:', isConnected);
+            } catch (err: any) {
+                console.error('[Status Debug] Erro ao verificar isConnected:', err.message);
                 apiStatus = 'disconnected';
             }
+        } else {
+            console.log('[Status Debug] Config marcada como não configurada (ou inexistente)');
         }
 
         res.json({
@@ -372,10 +383,10 @@ router.get('/status', authMiddleware, async (req: AuthenticatedRequest, res: Res
             worker: isWorkerRunning() ? 'running' : 'stopped',
             configured: config?.isConfigured || false,
         });
-    } catch (error) {
+    } catch (error: any) {
+        console.error('[Status Debug] Erro fatal na rota /status:', error.message);
         res.status(500).json({ error: 'Erro ao verificar status' });
     }
 });
 
 export default router;
-
