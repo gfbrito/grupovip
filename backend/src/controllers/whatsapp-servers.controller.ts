@@ -140,7 +140,10 @@ export async function createServer(req: AuthenticatedRequest, res: Response): Pr
             if (!config) {
                 config = await prisma.appConfig.findFirst();
             }
-            if (!config || !config.isConfigured) {
+            // Heurística fail-safe: se tem URL e Key, consideramos configurado
+            const actuallyConfigured = config?.isConfigured || (!!config?.evolutionUrl && !!config?.evolutionKey);
+
+            if (!config || !actuallyConfigured) {
                 res.status(503).json({
                     error: 'Sistema em manutenção',
                     message: 'Estamos passando por uma instabilidade no servidor, nossa equipe já está trabalhando para resolver.',

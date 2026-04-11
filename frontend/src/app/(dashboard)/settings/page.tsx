@@ -230,8 +230,14 @@ export default function SettingsPage() {
             payload.url = window.location.origin; // Backend validates URL format, provide a default valid one
         }
 
-        if (!payload.name || !payload.url) {
-            toast.error('Nome e URL são obrigatórios');
+        if (!payload.name) {
+            toast.error('O nome é obrigatório');
+            return;
+        }
+
+        // URL só é obrigatória se não for Evolution herdando config global
+        if (payload.type !== 'EVOLUTION' && !payload.url) {
+            toast.error('A URL é obrigatória');
             return;
         }
 
