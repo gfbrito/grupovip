@@ -304,7 +304,7 @@ export default function SettingsPage() {
         if (showQrModal && activeQrServerId && !qrData.connected) {
             interval = setInterval(() => {
                 fetchQrCode(activeQrServerId);
-            }, 3000);
+            }, 6000);
         }
         return () => clearInterval(interval);
     }, [showQrModal, activeQrServerId, qrData.connected, fetchQrCode]);
