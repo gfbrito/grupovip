@@ -279,7 +279,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                     </p>
                                 ) : (
                                     <p className="text-sm font-medium text-amber-800">
-                                        Estamos realizando uma manutenção preventiva para melhorar a estabilidade. Voltaremos em breve!
+                                        Configure seu WhatsApp nas configurações para começar a disparar suas mensagens!
                                     </p>
                                 )}
                             </div>

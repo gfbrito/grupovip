@@ -237,12 +237,12 @@ export default function SettingsPage() {
 
         try {
             await api.post('/whatsapp-servers', payload);
-            toast.success('Servidor adicionado! Configure o pareamento.');
+            toast.success('Instância criada! Configure o pareamento.');
             setShowAddModal(false);
             setNewServer({ name: '', type: 'EVOLUTION', url: '', apiKey: '', instanceName: '' });
             fetchServers();
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Erro ao adicionar servidor');
+            toast.error(error.response?.data?.error || 'Erro ao criar instância');
         }
     };
 
@@ -317,7 +317,7 @@ export default function SettingsPage() {
             toast.success('Servidor removido');
             fetchServers();
         } catch (error: any) {
-            toast.error(error.response?.data?.error || 'Erro ao remover servidor');
+            toast.error(error.response?.data?.error || 'Erro ao remover instância');
         }
     };
 
@@ -484,7 +484,7 @@ export default function SettingsPage() {
                         {canAddMore ? (
                             <Button onClick={() => setShowAddModal(true)}>
                                 <Plus className="w-4 h-4 mr-2" />
-                                Adicionar Servidor
+                                Criar Instância
                             </Button>
                         ) : (
                             <Link href="/admin/plans">
@@ -600,7 +600,7 @@ export default function SettingsPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-xl p-6 w-full max-w-md">
                         <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                            Adicionar Servidor WhatsApp
+                            Criar Nova Instância
                         </h3>
 
                         <div className="space-y-4">
