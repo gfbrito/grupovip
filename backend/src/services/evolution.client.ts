@@ -387,13 +387,16 @@ class EvolutionClient {
      */
     async createInstance(instanceName: string): Promise<any> {
         try {
-            const { client } = await this.createClient();
+            const { client, config } = await this.createClient();
             console.log(`[Evolution] Tentando criação remota compulsória: ${instanceName}`);
             
+            // Algumas versões exigem que o token não seja vazio
+            const instanceToken = config.evolutionKey || Math.random().toString(36).substring(7);
+
             const response = await client.post('/instance/create', {
                 instanceName,
                 name: instanceName, 
-                token: '', 
+                token: instanceToken, 
                 number: '',
                 qrcode: true,
                 integration: 'WHATSAPP-BAILEYS',
