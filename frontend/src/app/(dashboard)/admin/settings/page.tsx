@@ -27,6 +27,8 @@ export default function MasterSettingsPage() {
         aiApiKey: '',
         aiSystemPrompt: '',
     });
+    const [testStatus, setTestStatus] = useState<{ success: boolean; message: string; state?: string } | null>(null);
+    const [testing, setTesting] = useState(false);
 
     const fetchConfig = useCallback(async () => {
         setLoading(true);
@@ -72,6 +74,35 @@ export default function MasterSettingsPage() {
             addToast({ type: 'error', title: 'Erro', message: 'Não foi possível salvar as configurações.' });
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleTestConnection = async () => {
+        if (!config.evolutionUrl || !config.evolutionKey || !config.instanceName) {
+            addToast({ type: 'error', title: 'Erro', message: 'Preencha os campos da Evolution API para testar.' });
+            return;
+        }
+
+        setTesting(true);
+        setTestStatus(null);
+        try {
+            const { data } = await api.post('/settings/test', {
+                evolutionUrl: config.evolutionUrl,
+                evolutionKey: config.evolutionKey,
+                instanceName: config.instanceName
+            });
+            setTestStatus(data);
+            if (data.success) {
+                addToast({ type: 'success', title: 'Conectado', message: data.message });
+            } else {
+                addToast({ type: 'error', title: 'Falha', message: data.message });
+            }
+        } catch (error: any) {
+            console.error(error);
+            setTestStatus({ success: false, message: error.response?.data?.message || 'Erro ao conectar com o servidor.' });
+            addToast({ type: 'error', title: 'Erro', message: 'Servidor Evolution inacessível.' });
+        } finally {
+            setTesting(false);
         }
     };
 
@@ -135,6 +166,14 @@ export default function MasterSettingsPage() {
                             <h2 className="text-lg font-semibold text-slate-800">Infraestrutura WhatsApp (Padrão Global)</h2>
                             <p className="text-sm text-slate-500">Configuração herdada automaticamente por novas conexões de clientes.</p>
                         </div>
+                        <div className="ml-auto">
+                            {testStatus && (
+                                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${testStatus.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    <div className={`w-2 h-2 rounded-full ${testStatus.success ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+                                    {testStatus.success ? 'Conectado' : 'Desconectado'}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -163,6 +202,21 @@ export default function MasterSettingsPage() {
                                 onChange={(e) => setConfig({...config, instanceName: e.target.value})}
                             />
                         </div>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between">
+                        <div className="text-xs text-slate-400">
+                            {testStatus && <span className={testStatus.success ? 'text-green-600' : 'text-red-600'}>{testStatus.message}</span>}
+                        </div>
+                        <Button 
+                            type="button" 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={handleTestConnection}
+                            disabled={testing}
+                        >
+                            {testing ? 'Testando...' : '⚡ Testar Conexão'}
+                        </Button>
                     </div>
                 </div>
 
