@@ -30,10 +30,12 @@ class EvolutionClient {
     private configLoadedAt: number = 0;
     private overrideUrl?: string;
     private overrideKey?: string;
+    private overrideInstanceName?: string;
 
-    constructor(customUrl?: string, customKey?: string) {
+    constructor(customUrl?: string, customKey?: string, customInstanceName?: string) {
         this.overrideUrl = customUrl;
         this.overrideKey = customKey;
+        this.overrideInstanceName = customInstanceName;
     }
 
     private async getConfig(): Promise<AppConfig> {
@@ -98,7 +100,7 @@ class EvolutionClient {
     async getConnectionState(): Promise<ConnectionState> {
         const { client, config } = await this.createClient();
 
-        const response = await client.get(`/instance/connectionState/${config.instanceName}`);
+        const response = await client.get(`/instance/connectionState/${this.overrideInstanceName || config.instanceName}`);
 
         return {
             state: response.data?.instance?.state || response.data?.state || 'close',
@@ -143,11 +145,12 @@ class EvolutionClient {
     async fetchGroups(): Promise<EvolutionGroup[]> {
         const { client, config } = await this.createClient();
 
+        const instanceName = this.overrideInstanceName || config.instanceName;
         // Lista de endpoints para tentar (diferentes versões da API)
         const endpoints = [
-            `/group/fetchAllGroups/${config.instanceName}`,
-            `/group/fetchAllGroups/${config.instanceName}?getParticipants=false`,
-            `/chat/findChats/${config.instanceName}`,
+            `/group/fetchAllGroups/${instanceName}`,
+            `/group/fetchAllGroups/${instanceName}?getParticipants=false`,
+            `/chat/findChats/${instanceName}`,
         ];
 
         for (const endpoint of endpoints) {
@@ -213,7 +216,7 @@ class EvolutionClient {
     async sendMessage(groupJid: string, text: string): Promise<void> {
         const { client, config } = await this.createClient();
 
-        await client.post(`/message/sendText/${config.instanceName}`, {
+        await client.post(`/message/sendText/${this.overrideInstanceName || config.instanceName}`, {
             number: groupJid,
             text: text,
         });
@@ -234,7 +237,7 @@ class EvolutionClient {
             type === 'video' ? 'sendVideo' :
                 type === 'document' ? 'sendDocument' : 'sendAudio';
 
-        await client.post(`/message/${endpoint}/${config.instanceName}`, {
+        await client.post(`/message/${endpoint}/${this.overrideInstanceName || config.instanceName}`, {
             number: groupJid,
             mediaUrl,
             caption: caption || '',
@@ -260,7 +263,7 @@ class EvolutionClient {
             payload.participants = participants;
         }
 
-        const response = await client.post(`/group/create/${config.instanceName}`, payload);
+        const response = await client.post(`/group/create/${this.overrideInstanceName || config.instanceName}`, payload);
 
         const groupId = response.data?.id || response.data?.groupId || response.data?.jid;
 
@@ -289,7 +292,7 @@ class EvolutionClient {
 
         try {
             const response = await client.get(
-                `/group/participants/${config.instanceName}?groupJid=${groupJid}`
+                `/group/participants/${this.overrideInstanceName || config.instanceName}?groupJid=${groupJid}`
             );
 
             let participants: any[] = [];
@@ -322,21 +325,21 @@ class EvolutionClient {
         const { client, config } = await this.createClient();
 
         if (settings.name) {
-            await client.post(`/group/updateSubject/${config.instanceName}`, {
+            await client.post(`/group/updateSubject/${this.overrideInstanceName || config.instanceName}`, {
                 groupJid,
                 subject: settings.name,
             });
         }
 
         if (settings.description !== undefined) {
-            await client.post(`/group/updateDescription/${config.instanceName}`, {
+            await client.post(`/group/updateDescription/${this.overrideInstanceName || config.instanceName}`, {
                 groupJid,
                 description: settings.description,
             });
         }
 
         if (settings.messagesAdminsOnly !== undefined) {
-            await client.post(`/group/updateSetting/${config.instanceName}`, {
+            await client.post(`/group/updateSetting/${this.overrideInstanceName || config.instanceName}`, {
                 groupJid,
                 action: settings.messagesAdminsOnly ? 'announcement' : 'not_announcement',
             });
@@ -349,7 +352,7 @@ class EvolutionClient {
     async updateGroupPhoto(groupJid: string, imageUrl: string): Promise<void> {
         const { client, config } = await this.createClient();
 
-        await client.post(`/group/updateGroupPicture/${config.instanceName}`, {
+        await client.post(`/group/updateGroupPicture/${this.overrideInstanceName || config.instanceName}`, {
             groupJid,
             image: imageUrl,
         });
@@ -363,7 +366,7 @@ class EvolutionClient {
 
         try {
             const response = await client.get(
-                `/group/inviteCode/${config.instanceName}?groupJid=${groupJid}`
+                `/group/inviteCode/${this.overrideInstanceName || config.instanceName}?groupJid=${groupJid}`
             );
 
             if (response.data?.inviteUrl) {

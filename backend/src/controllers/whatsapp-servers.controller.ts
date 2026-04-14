@@ -622,9 +622,9 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
             try {
                 console.log(`[WhatsApp] Buscando QR para instância: ${server.instanceName} em ${server.url}`);
                 
-                // Criamos um cliente específico para este servidor usando sua URL e Chave próprias
+                // Criamos um cliente específico para este servidor usando sua URL, Chave e Nome de Instância próprios
                 const EvolutionClientClass = require('../services/evolution.client').EvolutionClient;
-                const customClient = new EvolutionClientClass(server.url, server.apiKey);
+                const customClient = new EvolutionClientClass(server.url, server.apiKey, server.instanceName);
 
                 // Função auxiliar para extrair o base64 de várias profundidades
                 const extractQR = (data: any) => {
