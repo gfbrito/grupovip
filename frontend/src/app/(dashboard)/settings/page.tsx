@@ -70,7 +70,7 @@ export default function SettingsPage() {
 
     // QR Code Modal
     const [showQrModal, setShowQrModal] = useState(false);
-    const [qrData, setQrData] = useState<{ base64: string | null; message: string; connected: boolean }>({ base64: null, message: '', connected: false });
+    const [qrData, setQrData] = useState<{ base64: string | null; message: string; connected: boolean; url?: string }>({ base64: null, message: '', connected: false });
     const [activeQrServerId, setActiveQrServerId] = useState<number | null>(null);
 
     // AI Config Global
