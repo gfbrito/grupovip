@@ -694,6 +694,7 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
                 success: true,
                 connected: false,
                 qrCodeBase64: provider.qrCodeBase64,
+                url: server.url, // URL que está sendo acessada
                 message: provider.qrCodeBase64 ? 'QR Code gerado com sucesso.' : 'Gerando QRCode... Tente novamente em alguns segundos.'
             });
         }
