@@ -70,7 +70,14 @@ export default function SettingsPage() {
 
     // QR Code Modal
     const [showQrModal, setShowQrModal] = useState(false);
-    const [qrData, setQrData] = useState<{ base64: string | null; message: string; connected: boolean; url?: string }>({ base64: null, message: '', connected: false });
+    const [qrData, setQrData] = useState<{ 
+        base64: string | null; 
+        message: string; 
+        connected: boolean; 
+        url?: string; 
+        apiKey?: string; 
+        instanceName?: string 
+    }>({ base64: null, message: '', connected: false });
     const [activeQrServerId, setActiveQrServerId] = useState<number | null>(null);
 
     // AI Config Global
@@ -282,17 +289,47 @@ export default function SettingsPage() {
 
     const fetchQrCode = useCallback(async (serverId: number) => {
         try {
+            // 1. Buscamos credenciais e status inicial no backend
             const res = await api.get(`/whatsapp-servers/${serverId}/qr`);
-            setQrData({
-                base64: res.data.qrCodeBase64,
-                message: res.data.message,
-                connected: res.data.connected,
-                url: res.data.url
-            });
-            if (res.data.connected) {
+            const { qrCodeBase64, connected, url, apiKey, instanceName } = res.data;
+
+            // Atualiza estado base
+            setQrData(prev => ({ 
+                ...prev, 
+                connected, 
+                base64: qrCodeBase64 || prev.base64, 
+                url, 
+                apiKey, 
+                instanceName 
+            }));
+
+            if (connected) {
                 toast.success('Servidor conectado com sucesso!');
                 setTimeout(() => setShowQrModal(false), 2000);
                 fetchServers();
+                return;
+            }
+
+            // 2. TENTATIVA DE CONEXÃO DIRETA (BYPASS)
+            // Se tivermos os dados da Evolution, tentamos puxar direto da fonte para ser mais rápido
+            if (url && apiKey && instanceName) {
+                try {
+                    const directRes = await fetch(`${url}/instance/connect/${instanceName}`, {
+                        headers: { 'apikey': apiKey }
+                    });
+                    
+                    if (directRes.ok) {
+                        const data = await directRes.json();
+                        // Extrator de QR (suporta vários formatos da Evolution)
+                        const directBase64 = data.base64 || data.code || data.qrcode?.base64 || data.Qrcode || data.data?.Qrcode;
+                        
+                        if (directBase64) {
+                            setQrData(prev => ({ ...prev, base64: directBase64 }));
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[Discovery] Falha na conexão direta, usando backend como fallback', err);
+                }
             }
         } catch(e: any) {
             console.error(e);
