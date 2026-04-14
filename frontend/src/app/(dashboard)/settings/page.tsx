@@ -311,24 +311,32 @@ export default function SettingsPage() {
             }
 
             // 2. TENTATIVA DE CONEXÃO DIRETA (BYPASS)
-            // Se tivermos os dados da Evolution, tentamos puxar direto da fonte para ser mais rápido
+            // Tentamos puxar direto da fonte para ser mais rápido, testando múltiplos endpoints
             if (url && apiKey && instanceName) {
-                try {
-                    const directRes = await fetch(`${url}/instance/connect/${instanceName}`, {
-                        headers: { 'apikey': apiKey }
-                    });
-                    
-                    if (directRes.ok) {
-                        const data = await directRes.json();
-                        // Extrator de QR (suporta vários formatos da Evolution)
-                        const directBase64 = data.base64 || data.code || data.qrcode?.base64 || data.Qrcode || data.data?.Qrcode;
+                const directEndpoints = [
+                    `${url}/instance/${instanceName}/qrcode`,
+                    `${url}/instance/connect/${instanceName}`
+                ];
+
+                for (const endpoint of directEndpoints) {
+                    try {
+                        const directRes = await fetch(endpoint, {
+                            headers: { 'apikey': apiKey }
+                        });
                         
-                        if (directBase64) {
-                            setQrData(prev => ({ ...prev, base64: directBase64 }));
+                        if (directRes.ok) {
+                            const data = await directRes.json();
+                            // Extrator de QR (suporta vários formatos da Evolution)
+                            const directBase64 = data.base64 || data.code || data.qrcode?.base64 || data.Qrcode || data.data?.Qrcode || data.data?.base64;
+                            
+                            if (directBase64) {
+                                setQrData(prev => ({ ...prev, base64: directBase64 }));
+                                break; // Já conseguimos o QR, podemos parar o loop
+                            }
                         }
+                    } catch (err) {
+                        console.warn(`[Discovery] Falha no endpoint direto ${endpoint}`, err);
                     }
-                } catch (err) {
-                    console.warn('[Discovery] Falha na conexão direta, usando backend como fallback', err);
                 }
             }
         } catch(e: any) {

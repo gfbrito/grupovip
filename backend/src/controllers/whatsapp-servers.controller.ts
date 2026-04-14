@@ -640,9 +640,10 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
 
                 // Tentamos os endpoints em ordem de probabilidade
                 const endpoints = [
+                    `/instance/${server.instanceName}/qrcode`, // Prioridade 1 (Sugestão do usuário)
                     `/instance/connect/${server.instanceName}`,
                     `/instance/qr/${server.instanceName}`,
-                    `/instance/qr` // Endpoint exato sugerido pelo usuário
+                    `/instance/qr` 
                 ];
 
                 let qrCode: string | null = null;
