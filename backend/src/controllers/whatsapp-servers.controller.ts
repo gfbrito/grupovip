@@ -690,13 +690,14 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
             res.setHeader('Expires', '0');
             res.setHeader('Surrogate-Control', 'no-store');
 
-            return res.json({
+            res.json({
                 success: true,
                 connected: false,
                 qrCodeBase64: provider.qrCodeBase64,
                 url: server.url, // URL que está sendo acessada
                 message: provider.qrCodeBase64 ? 'QR Code gerado com sucesso.' : 'Gerando QRCode... Tente novamente em alguns segundos.'
             });
+            return;
         }
 
         res.json({ 
