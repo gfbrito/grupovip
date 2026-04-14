@@ -683,6 +683,19 @@ export async function getQrCode(req: AuthenticatedRequest, res: Response): Promi
             } catch (err: any) {
                 console.error('[WhatsApp] Erro ao buscar QR da Evolution:', err.response?.data || err.message);
             }
+
+            // Desabilitar cache para garantir que o polling veja o QR novo
+            res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+            res.setHeader('Surrogate-Control', 'no-store');
+
+            return res.json({
+                success: true,
+                connected: false,
+                qrCodeBase64: provider.qrCodeBase64,
+                message: provider.qrCodeBase64 ? 'QR Code gerado com sucesso.' : 'Gerando QRCode... Tente novamente em alguns segundos.'
+            });
         }
 
         res.json({ 
