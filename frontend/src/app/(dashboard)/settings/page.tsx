@@ -286,7 +286,8 @@ export default function SettingsPage() {
             setQrData({
                 base64: res.data.qrCodeBase64,
                 message: res.data.message,
-                connected: res.data.connected
+                connected: res.data.connected,
+                url: res.data.url
             });
             if (res.data.connected) {
                 toast.success('Servidor conectado com sucesso!');
